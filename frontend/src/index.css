@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-background: #FEF3C7;
+  /* Warm amber cream background */
+
+  --color-surface: #B45309;
+  /* Amber 700 - Primary brand color */
+  --color-accent: #F59E0B;
+  /* Amber 500 - Accent highlights */
+  --color-textLight: #FFFBEB;
+  /* Warm light text */
+  --color-textDark: #78350F;
+  /* Amber 900 - Dark warm text */
+
+  --color-honey: #F59E0B;
+  --color-cardWhite: #FFFFFF;
+
+  --font-sans: "Poppins", sans-serif;
+
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+
+  /* Hotel Partner Theme - Updated to match amber branding */
+  --color-partner-bg: #FFFFFF;
+  --color-partner-text-primary: #B45309;
+  /* var(--color-surface) */
+  --color-partner-text-secondary: #78350F;
+  /* var(--color-textDark) */
+  --color-partner-btn: #B45309;
+  /* var(--color-surface) */
+  --color-partner-card: #FFFBEB;
+  --color-partner-border: #FDE68A;
+  /* Amber 200 border */
+}
+
+@layer base {
+  body {
+    /* 
+       Reverted Background:
+       Clean Light Gray/White as per "Light Theme" preference.
+       The previous teal gradient was rejected.
+    */
+    @apply bg-slate-50 text-textDark font-sans min-h-screen selection:bg-amber-100;
+
+    /* Prevent pull-to-refresh and overscroll in some containers if needed */
+    /* overscroll-behavior-y: none; */
+
+    /* Better touch handling for mobile apps */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+  }
+
+  /* Prevent zoom on focus for iOS by ensuring font-size is at least 16px */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* COMPATIBILITY: Force dark background for Hotel Module to match white text */
+/* Hotel Partner Module Reset */
+body:has(#hotel-root) {
+  background-color: var(--color-partner-bg);
+  color: var(--color-partner-text-primary);
+}
+
+.text-muted {
+  @apply text-slate-400;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.input {
+  @apply w-full px-4 py-3 rounded-xl border-2 border-gray-400 outline-none transition-all placeholder:text-gray-400 focus:border-[#B45309] focus:ring-4 focus:ring-[#B45309]/10 bg-white text-[#78350F] font-medium shadow-sm hover:border-gray-500;
+}
+
+@media print {
+
+  /* Hide Navbar and specific buttons during print */
+  nav,
+  .navbar,
+  footer,
+  .bottom-nav,
+  button[class*="print:hidden"],
+  [aria-label="Bottom Navigation"] {
+    display: none !important;
+  }
+}
