@@ -28,9 +28,10 @@ const io = new Server(server, {
     origin: process.env.FRONTEND_URL || [
       'http://localhost:5173',
       'http://127.0.0.1:5173',
-      'https://rukkoo.in',
-      'https://www.rukkoo.in',
-      'https://rukkoo-project.vercel.app'
+   'https://homezoo.vercel.app',
+   'homezoo.vercel.app',
+     
+      
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
