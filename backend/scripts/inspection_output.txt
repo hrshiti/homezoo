@@ -1,0 +1,35 @@
+--- Inspecting PG/Hostel Properties ---
+Found 4 potentially relevant properties.
+
+Property: wertwe (6993fbfae0af7cfdc839a3a1)
+  Type: pg
+  Status: approved, Live: true
+  Dynamic Category: Not Set (null/undefined)
+
+Property: green villa (69941282e0af7cfdc839a7dd)
+  Type: rent
+  Status: approved, Live: true
+  Dynamic Category ID: 69903daa2b4105637b2c63b7
+  Category Name: luxury
+  Category DisplayName: Rent
+
+Property: royal hotel (69941e14e0af7cfdc839a991)
+  Type: buy
+  Status: approved, Live: true
+  Dynamic Category ID: 699041932b4105637b2c64d5
+  Category Name: Buy
+  Category DisplayName: Buy
+
+Property: fdgdfg (699421afe0af7cfdc839aa99)
+  Type: plot
+  Status: approved, Live: true
+  Dynamic Category ID: 699041d32b4105637b2c64de
+  Category Name: premium
+  Category DisplayName: Plot
+
+--- Checking Categories ---
+All Categories in DB:
+  best / PG/Co-Livinig (69903d672b4105637b2c63ae)
+  luxury / Rent (69903daa2b4105637b2c63b7)
+  Buy / Buy (699041932b4105637b2c64d5)
+  premium / Plot (699041d32b4105637b2c64de)

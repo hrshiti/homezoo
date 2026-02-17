@@ -8,7 +8,7 @@ import { categoryService } from '../../../services/categoryService';
 const FOUR_OPTIONS = [
   { key: 'pg-coliving', label: 'PG/Co-living', description: 'Long-stay beds or rooms with shared facilities', badge: 'Long Term', icon: BedDouble, route: '/hotel/join-pg', color: 'bg-purple-50 text-purple-600' },
   { key: 'rent', label: 'Rent', description: 'List your property for rent', badge: 'Rental', icon: Home, color: 'bg-emerald-50 text-emerald-600' },
-  { key: 'buy', label: 'Buy', description: 'List your property for sale', badge: 'Sale', icon: Landmark, color: 'bg-blue-50 text-blue-600' },
+  { key: 'buy', label: 'Sell', description: 'List your property for sale', badge: 'Sale', icon: Landmark, color: 'bg-blue-50 text-blue-600' },
   { key: 'plot', label: 'Plot', description: 'List land or plot', badge: 'Land', icon: TreePine, color: 'bg-amber-50 text-amber-600' },
 ];
 
@@ -20,22 +20,56 @@ const PartnerJoinPropertyType = () => {
     const buildFourOptions = async () => {
       try {
         const categories = await categoryService.getActiveCategories();
-        const byLabel = (name) => categories.find(c => (c.displayName || '').toLowerCase() === name.toLowerCase() || (c.name || '').toLowerCase() === name.toLowerCase());
 
-        const pgCat = categories.find(c => ['hostel', 'pg', 'pg/co-living'].includes((c.displayName || '').toLowerCase()));
-        const rentCat = byLabel('Rent');
-        const buyCat = byLabel('Buy');
-        const plotCat = byLabel('Plot') || byLabel('Plots');
+        // Helper to find category by name/display name
+        const findCat = (names) => {
+          const searchNames = Array.isArray(names) ? names : [names];
+          return categories.find(c =>
+            searchNames.some(n =>
+              (c.displayName || '').toLowerCase() === n.toLowerCase() ||
+              (c.name || '').toLowerCase() === n.toLowerCase()
+            )
+          );
+        };
 
-        setAllTypes([
-          { ...FOUR_OPTIONS[0], route: '/hotel/join-pg', categoryId: pgCat?._id },
-          rentCat ? { ...FOUR_OPTIONS[1], key: rentCat._id, route: `/hotel/join-dynamic/${rentCat._id}`, categoryId: rentCat._id } : { ...FOUR_OPTIONS[1], key: 'rent', route: null },
-          buyCat ? { ...FOUR_OPTIONS[2], key: buyCat._id, route: `/hotel/join-dynamic/${buyCat._id}`, categoryId: buyCat._id } : { ...FOUR_OPTIONS[2], key: 'buy', route: null },
-          plotCat ? { ...FOUR_OPTIONS[3], key: plotCat._id, route: `/hotel/join-dynamic/${plotCat._id}`, categoryId: plotCat._id } : { ...FOUR_OPTIONS[3], key: 'plot', route: null },
-        ]);
+        const pgCat = findCat(['hostel', 'pg', 'pg/co-living', 'pg/co-living']);
+        const rentCat = findCat('Rent');
+        const buyCat = findCat('Buy');
+        const plotCat = findCat(['Plot', 'Plots']);
+
+        // Construct the 4 options with IDs if available
+        const newOptions = [
+          {
+            ...FOUR_OPTIONS[0],
+            route: '/hotel/join-pg', // specific route for PG
+            categoryId: pgCat?._id
+          },
+          {
+            ...FOUR_OPTIONS[1],
+            // key: rentCat?._id || 'rent',
+            route: rentCat ? `/hotel/join-dynamic/${rentCat._id}` : null,
+            categoryId: rentCat?._id
+          },
+          {
+            ...FOUR_OPTIONS[2],
+            // key: buyCat?._id || 'buy',
+            route: buyCat ? `/hotel/join-dynamic/${buyCat._id}` : null,
+            categoryId: buyCat?._id
+          },
+          {
+            ...FOUR_OPTIONS[3],
+            // key: plotCat?._id || 'plot',
+            route: plotCat ? `/hotel/join-dynamic/${plotCat._id}` : null,
+            categoryId: plotCat?._id
+          }
+        ];
+
+        setAllTypes(newOptions);
       } catch (error) {
         console.error("Failed to load categories", error);
-        setAllTypes(FOUR_OPTIONS.map((o, i) => i === 0 ? { ...o } : { ...o, route: null }));
+        // Fallback: keep options but disable routes if IDs are missing (except maybe PG which has a static route? 
+        // actually PG wizard might need ID too, but let's stick to the current structure where PG route is static '/hotel/join-pg')
+        setAllTypes(FOUR_OPTIONS.map((o, i) => i === 0 ? { ...o, route: '/hotel/join-pg' } : { ...o, route: null }));
       }
     };
     buildFourOptions();

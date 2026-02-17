@@ -59,7 +59,7 @@ export default function ReelsPage() {
   const handleViewed = useCallback((reelId) => {
     if (viewReportedRef.current.has(reelId)) return;
     viewReportedRef.current.add(reelId);
-    reelService.recordView(reelId, 3).catch(() => {});
+    reelService.recordView(reelId, 3).catch(() => { });
   }, []);
 
   const handleLikeToggle = useCallback(async (reelId) => {
@@ -195,7 +195,7 @@ export default function ReelsPage() {
       }
     } catch (err) {
       if (err.name !== 'AbortError') {
-        await navigator.clipboard.writeText(url).catch(() => {});
+        await navigator.clipboard.writeText(url).catch(() => { });
         toast.success('Link copied to clipboard');
       }
     }
@@ -236,8 +236,8 @@ export default function ReelsPage() {
   }, [handleScroll]);
 
   const ReelsTopBar = () => (
-    <div className="fixed top-0 left-0 right-0 z-50 md:max-w-md md:left-1/2 md:-translate-x-1/2 flex items-center justify-between p-3 pt-safe safe-area-top bg-black/40 backdrop-blur-sm">
-      <div className="flex items-center">
+    <div className="fixed top-0 left-0 right-0 z-50 md:max-w-md md:left-1/2 md:-translate-x-1/2 flex items-center justify-between p-3 pt-safe safe-area-top bg-black/40 backdrop-blur-sm pointer-events-none">
+      <div className="flex items-center pointer-events-auto">
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -251,7 +251,7 @@ export default function ReelsPage() {
       <button
         type="button"
         onClick={handleUploadClick}
-        className="p-2.5 rounded-full bg-surface text-white hover:bg-surface/90 shadow-lg"
+        className="p-2.5 rounded-full bg-surface text-white hover:bg-surface/90 shadow-lg pointer-events-auto"
         aria-label="Upload reel"
       >
         <Plus size={22} />
@@ -275,22 +275,22 @@ export default function ReelsPage() {
       <div className="min-h-dvh bg-black flex flex-col items-center justify-center text-white p-6">
         <ReelsTopBar />
         <div className="flex-1 flex flex-col items-center justify-center pt-14">
-        <p className="text-lg font-semibold">No reels yet</p>
-        <p className="text-sm text-white/70 mt-2">Be the first to share a 10-second reel.</p>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="video/mp4,video/webm"
-          className="hidden"
-          onChange={handleFileSelected}
-        />
-        <button
-          type="button"
-          onClick={handleUploadClick}
-          className="mt-6 px-6 py-3 rounded-xl bg-surface text-white font-bold"
-        >
-          Upload Reel
-        </button>
+          <p className="text-lg font-semibold">No reels yet</p>
+          <p className="text-sm text-white/70 mt-2">Be the first to share a 10-second reel.</p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="video/mp4,video/webm"
+            className="hidden"
+            onChange={handleFileSelected}
+          />
+          <button
+            type="button"
+            onClick={handleUploadClick}
+            className="mt-6 px-6 py-3 rounded-xl bg-surface text-white font-bold"
+          >
+            Upload Reel
+          </button>
         </div>
         {uploadOpen && (
           <div className="fixed inset-0 bg-black/80 z-[60] flex items-end md:items-center md:justify-center">
@@ -337,7 +337,7 @@ export default function ReelsPage() {
                   </p>
                 </div>
                 <div className="flex gap-3">
-<button
+                  <button
                     type="button"
                     onClick={() => {
                       setUploadOpen(false);
@@ -374,12 +374,12 @@ export default function ReelsPage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black md:max-w-md md:mx-auto">
+    <div className="fixed inset-0 z-[100] bg-black md:max-w-md md:mx-auto">
       <ReelsTopBar />
       <div
         ref={containerRef}
-        className="h-full overflow-y-auto snap-y snap-mandatory scroll-smooth no-scrollbar"
-        style={{ scrollSnapType: 'y mandatory' }}
+        className="h-[100dvh] overflow-y-auto snap-y snap-mandatory scroll-smooth no-scrollbar"
+        style={{ scrollSnapType: 'y mandatory', touchAction: 'pan-y' }}
       >
         {reels.map((reel, index) => (
           <div
@@ -453,50 +453,50 @@ export default function ReelsPage() {
                   Add caption (optional)
                 </label>
                 <textarea
-                    value={uploadCaption}
-                    onChange={(e) => setUploadCaption(e.target.value.slice(0, MAX_CAPTION_LENGTH))}
-                    placeholder="Describe your reel..."
-                    maxLength={MAX_CAPTION_LENGTH}
-                    rows={3}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-surface/30 resize-none bg-white"
-                  />
-                  <p className="text-right text-xs text-gray-400 mt-1">
-                    {uploadCaption.length}/{MAX_CAPTION_LENGTH}
-                  </p>
-                </div>
-                <div className="flex gap-3">
-<button
-                    type="button"
-                    onClick={() => {
-                      setUploadOpen(false);
-                      setUploadCaption('');
-                      setSelectedFileName('');
-                      setSelectedFile(null);
-                      if (fileInputRef.current) fileInputRef.current.value = '';
-                    }}
-                    className="flex-1 py-3 rounded-xl border border-gray-200 font-semibold text-gray-700"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={uploading}
-                    className="flex-1 py-3 rounded-xl bg-surface text-white font-semibold disabled:opacity-60 flex items-center justify-center gap-2"
-                  >
-                    {uploading ? (
-                      <>
-                        <Loader2 size={20} className="animate-spin" />
-                        Uploading…
-                      </>
-                    ) : (
-                      'Post'
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
+                  value={uploadCaption}
+                  onChange={(e) => setUploadCaption(e.target.value.slice(0, MAX_CAPTION_LENGTH))}
+                  placeholder="Describe your reel..."
+                  maxLength={MAX_CAPTION_LENGTH}
+                  rows={3}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-surface/30 resize-none bg-white"
+                />
+                <p className="text-right text-xs text-gray-400 mt-1">
+                  {uploadCaption.length}/{MAX_CAPTION_LENGTH}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUploadOpen(false);
+                    setUploadCaption('');
+                    setSelectedFileName('');
+                    setSelectedFile(null);
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                  }}
+                  className="flex-1 py-3 rounded-xl border border-gray-200 font-semibold text-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploading}
+                  className="flex-1 py-3 rounded-xl bg-surface text-white font-semibold disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin" />
+                      Uploading…
+                    </>
+                  ) : (
+                    'Post'
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
-        )}
-      </div>
-    );
-  }
+        </div>
+      )}
+    </div>
+  );
+}

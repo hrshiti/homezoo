@@ -20,6 +20,8 @@ const REQUIRED_DOCS_HOTEL = [
   { type: "fire_safety", name: "Fire Safety Certificate" }
 ];
 const HOTEL_AMENITIES = ["Lift", "Restaurant", "Room Service", "Swimming Pool", "Parking", "Gym", "Spa", "Bar"];
+const RENT_AMENITIES = ["Lift", "Parking", "Power Backup", "Water Supply", "Security Guard", "CCTV", "Comfort Amenities", "Gym", "Garden", "Balcony", "Modular Kitchen", "Air Conditioning"];
+const SELL_AMENITIES = ["Lift", "Parking", "Power Backup", "Water Supply", "Security Guard", "CCTV", "Gym", "Garden", "Balcony", "Modular Kitchen", "Air Conditioning", "Club House", "Children's Play Area", "Swimming Pool"];
 const HOUSE_RULES_OPTIONS = ["No smoking", "No pets", "No loud music", "ID required at check-in"];
 const ROOM_AMENITIES = [
   { key: 'ac', label: 'AC', icon: Snowflake },
@@ -52,8 +54,54 @@ const AddDynamicWizard = () => {
   const [isFlutter, setIsFlutter] = useState(false);
 
   // Tent Logic State
-  const [categoryName, setCategoryName] = useState('');
+  const [categoryName, setCategoryName] = useState(location.state?.categoryName || '');
   const isTent = categoryName.toLowerCase().includes('tent') || categoryName.toLowerCase().includes('camp');
+  // Extended check: If category name matches OR if existing property has rent details
+  const isRent = categoryName.toLowerCase().includes('rent') || categoryName.toLowerCase().includes('residential') || categoryName.toLowerCase().includes('apartment') || categoryName.toLowerCase().includes('flat') || categoryName.toLowerCase().includes('lease') || (existingProperty && existingProperty.rentDetails && Object.keys(existingProperty.rentDetails).length > 0);
+  const isBuy = categoryName.toLowerCase().includes('buy') || categoryName.toLowerCase().includes('sell');
+  const isPlot = categoryName.toLowerCase().includes('plot');
+
+  // Dynamic Steps Logic
+  const getWizardSteps = () => {
+    const steps = [{ id: 1, key: 'basic', label: 'Basic Info' }];
+
+    if (isRent || isBuy || isPlot) {
+      steps.push({ id: 2, key: 'details', label: 'Property Details' });
+    }
+
+    steps.push({ id: 3, key: 'location', label: 'Location' });
+
+    if (!isPlot) {
+      steps.push({ id: 4, key: 'amenities', label: 'Amenities' });
+    }
+
+    if (!isRent && !isPlot) {
+      steps.push({ id: 5, key: 'nearby', label: 'Nearby Places' });
+    }
+    steps.push({ id: 6, key: 'images', label: 'Images' });
+
+    if (!isRent && !isBuy && !isPlot) {
+      steps.push({ id: 7, key: 'rooms', label: isTent ? 'Tents/Units' : 'Room Types' });
+    }
+
+    if (!isPlot && !isBuy && !isRent) {
+      steps.push({ id: 8, key: 'rules', label: 'Policies' });
+    }
+
+    // Docs for everyone? Maybe not for Plot/Buy? Let's keep for credibility.
+    // Actually Requirement said for Buy: "Legal Status Verified?" implies docs check.
+    if (!isRent) {
+      steps.push({ id: 9, key: 'docs', label: 'Documents' });
+    }
+
+    steps.push({ id: 10, key: 'review', label: 'Review' });
+
+    return steps;
+  };
+
+  const wizardSteps = getWizardSteps();
+  const currentStepInfo = wizardSteps[step - 1] || wizardSteps[wizardSteps.length - 1]; // step is 1-indexed index
+  const totalSteps = wizardSteps.length;
 
   useEffect(() => {
     if (location.state?.categoryName) {
@@ -89,6 +137,7 @@ const AddDynamicWizard = () => {
     shortDescription: '',
     coverImage: '',
     propertyImages: [],
+    videoUrl: '', // Universal
     address: { country: '', state: '', city: '', area: '', fullAddress: '', pincode: '' },
     location: { type: 'Point', coordinates: ['', ''] },
     nearbyPlaces: [],
@@ -98,7 +147,32 @@ const AddDynamicWizard = () => {
     contactNumber: '',
     cancellationPolicy: '',
     houseRules: [],
-    documents: REQUIRED_DOCS_HOTEL.map(d => ({ type: d.type, name: d.name, fileUrl: '' }))
+    documents: REQUIRED_DOCS_HOTEL.map(d => ({ type: d.type, name: d.name, fileUrl: '' })),
+
+    // New Fields
+    rentDetails: {
+      type: '1BHK', furnishing: 'Semi', tenantPreference: 'Any',
+      builtYear: '', maintenanceCharges: '', electricityIncluded: false,
+      waterSupply: '', societyName: '', lift: false
+    },
+    buyDetails: {
+      type: 'Apartment', area: { superBuiltUp: '', carpet: '', unit: 'sqft' },
+      ownership: 'Freehold', propertyAge: 'New', floor: { current: '', total: '' },
+      facing: '', registrationIncluded: false, stampDutyIncluded: false,
+      propertyTax: '', legalVerified: false, loanEligible: false, builderName: ''
+    },
+    plotDetails: {
+      plotArea: '', unit: 'sqyrd', dimensions: { length: '', breadth: '' },
+      facing: '', landType: 'Residential', roadWidth: '', boundaryMarked: false,
+      approvalAuthority: '', soilType: '', electricityAvailable: false,
+      waterSource: '', nearbyLandmark: ''
+    },
+    isVerified: false,
+    isFeatured: false,
+    isUrgent: false,
+    isNegotiable: false,
+    virtualTourLink: '',
+    availabilityStatus: 'Available'
   });
 
   const [roomTypes, setRoomTypes] = useState([]);
@@ -570,6 +644,30 @@ const AddDynamicWizard = () => {
           shortDescription: prop.shortDescription || '',
           coverImage: prop.coverImage || '',
           propertyImages: prop.propertyImages || [],
+          rentDetails: prop.rentDetails || {
+            type: '1BHK', furnishing: 'Semi', tenantPreference: 'Any',
+            builtYear: '', maintenanceCharges: '', electricityIncluded: false,
+            waterSupply: '', societyName: '', lift: false
+          },
+          buyDetails: prop.buyDetails || {
+            type: 'Apartment', area: { superBuiltUp: '', carpet: '', unit: 'sqft' },
+            ownership: 'Freehold', propertyAge: 'New', floor: { current: '', total: '' },
+            facing: '', registrationIncluded: false, stampDutyIncluded: false,
+            propertyTax: '', legalVerified: false, loanEligible: false, builderName: ''
+          },
+          plotDetails: prop.plotDetails || {
+            plotArea: '', unit: 'sqyrd', dimensions: { length: '', breadth: '' },
+            facing: '', landType: 'Residential', roadWidth: '', boundaryMarked: false,
+            approvalAuthority: '', soilType: '', electricityAvailable: false,
+            waterSource: '', nearbyLandmark: ''
+          },
+          videoUrl: prop.videoUrl || '',
+          isVerified: prop.isVerified || false,
+          isFeatured: prop.isFeatured || false,
+          isUrgent: prop.isUrgent || false,
+          isNegotiable: prop.isNegotiable || false,
+          virtualTourLink: prop.virtualTourLink || '',
+          availabilityStatus: prop.availabilityStatus || 'Available',
           address: {
             country: prop.address?.country || '',
             state: prop.address?.state || '',
@@ -657,7 +755,7 @@ const AddDynamicWizard = () => {
       setError('Please upload at least 4 property images');
       return;
     }
-    setStep(6);
+    setStep(step + 1);
   };
 
   const nextFromRoomTypes = () => {
@@ -684,8 +782,12 @@ const AddDynamicWizard = () => {
     setError('');
     try {
       const propertyPayload = {
-        propertyType: isTent ? 'tent' : 'hotel',
+        propertyType: isTent ? 'tent' : isRent ? 'rent' : isBuy ? 'buy' : isPlot ? 'plot' : 'hotel',
         dynamicCategory: categoryId,
+        rentDetails: isRent ? propertyForm.rentDetails : undefined,
+        buyDetails: isBuy ? propertyForm.buyDetails : undefined,
+        plotDetails: isPlot ? propertyForm.plotDetails : undefined,
+        videoUrl: propertyForm.videoUrl,
         propertyName: propertyForm.propertyName,
         contactNumber: propertyForm.contactNumber,
         description: propertyForm.description,
@@ -775,6 +877,88 @@ const AddDynamicWizard = () => {
     }
   };
 
+
+
+  const clearCurrentStep = () => {
+    if (!window.confirm("Clear all fields in this step?")) return;
+    const currentKey = currentStepInfo?.key;
+
+    if (currentKey === 'basic') {
+      setPropertyForm(prev => ({ ...prev, propertyName: '', description: '', shortDescription: '', coverImage: '' }));
+    } else if (currentKey === 'location') {
+      updatePropertyForm('address', { country: '', state: '', city: '', area: '', fullAddress: '', pincode: '' });
+      updatePropertyForm(['location', 'coordinates'], ['', '']);
+    } else if (currentKey === 'amenities') {
+      updatePropertyForm('amenities', []);
+    } else if (currentKey === 'nearby') {
+      updatePropertyForm('nearbyPlaces', []);
+    } else if (currentKey === 'images') {
+      updatePropertyForm('propertyImages', []);
+    } else if (currentKey === 'rooms') {
+      setRoomTypes([]);
+    } else if (currentKey === 'rules') {
+      setPropertyForm(prev => ({ ...prev, checkInTime: '', checkOutTime: '', cancellationPolicy: '', houseRules: [] }));
+    } else if (currentKey === 'docs') {
+      updatePropertyForm('documents', REQUIRED_DOCS_HOTEL.map(d => ({ type: d.type, name: d.name, fileUrl: '' })));
+    }
+  };
+
+  const handleNext = () => {
+    if (loading) return;
+
+    // Validation based on current step key
+    const currentKey = currentStepInfo?.key;
+
+    if (currentKey === 'basic') {
+      nextFromProperty(); // Validates name/desc
+      setStep(step + 1);
+    } else if (currentKey === 'details') {
+      // Validate specific details
+      if (isRent) {
+        if (!propertyForm.rentDetails.monthlyRent) { setError('Monthly Rent is required'); return; }
+        if (!propertyForm.rentDetails.type) { setError('Property Type is required'); return; }
+      } else if (isBuy) {
+        if (!propertyForm.buyDetails.expectedPrice) { setError('Expected Price is required'); return; }
+        if (!propertyForm.buyDetails.type) { setError('Property Type is required'); return; }
+      } else if (isPlot) {
+        if (!propertyForm.plotDetails.expectedPrice) { setError('Expected Price is required'); return; }
+        if (!propertyForm.plotDetails.plotArea) { setError('Plot Area is required'); return; }
+      }
+      setStep(step + 1);
+    } else if (currentKey === 'location') {
+      // nextFromLocation logic inline or called
+      if (!propertyForm.address.fullAddress) { setError('Address required'); return; }
+      setStep(step + 1);
+    } else if (currentKey === 'amenities') {
+      setStep(step + 1);
+    } else if (currentKey === 'nearby') {
+      // For Sell/Buy properties, nearby places are optional
+      if (isBuy) {
+        setStep(step + 1);
+      } else {
+        nextFromNearbyPlaces();
+      }
+    } else if (currentKey === 'images') {
+      nextFromImages();
+    } else if (currentKey === 'rooms') {
+      nextFromRoomTypes();
+    } else if (currentKey === 'rules') {
+      if (!isPlot && !isBuy) { // Rules mostly for Rent/Hotel/PG
+        nextFromRules(); // Validates checkin/out
+      } else {
+        setStep(step + 1);
+      }
+    } else if (currentKey === 'docs') {
+      setStep(step + 1);
+    } else if (currentKey === 'review') {
+      submitAll();
+    }
+  };
+
+  const getStepTitle = () => {
+    return currentStepInfo?.label || '';
+  };
+
   const handleBack = () => {
     if (step > 1) {
       setStep(step - 1);
@@ -784,84 +968,15 @@ const AddDynamicWizard = () => {
     }
   };
 
-  const clearCurrentStep = () => {
-    if (!window.confirm("Clear all fields in this step?")) return;
-    if (step === 1) {
-      setPropertyForm(prev => ({ ...prev, propertyName: '', description: '', shortDescription: '', coverImage: '' }));
-    } else if (step === 2) {
-      updatePropertyForm('address', { country: '', state: '', city: '', area: '', fullAddress: '', pincode: '' });
-      updatePropertyForm(['location', 'coordinates'], ['', '']);
-    } else if (step === 3) {
-      updatePropertyForm('amenities', []);
-    } else if (step === 4) {
-      updatePropertyForm('nearbyPlaces', []);
-    } else if (step === 5) {
-      updatePropertyForm('propertyImages', []);
-    } else if (step === 6) {
-      setRoomTypes([]);
-    } else if (step === 7) {
-      setPropertyForm(prev => ({ ...prev, checkInTime: '', checkOutTime: '', cancellationPolicy: '', houseRules: [] }));
-    } else if (step === 8) {
-      updatePropertyForm('documents', REQUIRED_DOCS_HOTEL.map(d => ({ type: d.type, name: d.name, fileUrl: '' })));
-    }
-  };
-
-  const handleNext = () => {
-    if (loading) return;
-    switch (step) {
-      case 1:
-        nextFromProperty();
-        break;
-      case 2:
-        setStep(3); // Location next
-        break;
-      case 3:
-        setStep(4); // Amenities next
-        break;
-      case 4:
-        nextFromNearbyPlaces();
-        break;
-      case 5:
-        nextFromImages();
-        break;
-      case 6:
-        nextFromRoomTypes();
-        break;
-      case 7:
-        setStep(8); // Rules next
-        break;
-      case 8:
-        setStep(9); // Docs next - validation removed/optional
-        break;
-      case 9:
-        submitAll();
-        break;
-      default:
-        break;
-    }
-  };
-
-  const getStepTitle = () => {
-    switch (step) {
-      case 1: return 'Basic Info';
-      case 2: return 'Location';
-      case 3: return 'Amenities';
-      case 4: return 'Nearby Places';
-      case 5: return 'Property Images';
-      case 6: return 'Room Types';
-      case 7: return 'Property Rules';
-      case 8: return 'Documents';
-      case 9: return 'Review & Submit';
-      default: return '';
-    }
-  };
-
   const handleExit = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    navigate(-1);
+    // Clear draft if needed, or keep it? Current handleBack clears it on step 1.
+    // Let's prompt or just exit. For now just exit to dashboard.
+    // If they exit mid-way, maybe keep draft? 
+    // The user just wants to exit.
+    navigate('/hotel/dashboard');
   };
 
-  const isEditingSubItem = (step === 4 && editingNearbyIndex !== null) || (step === 6 && editingRoomType !== null);
+  const isEditingSubItem = (currentStepInfo?.key === 'nearby' && editingNearbyIndex !== null) || (currentStepInfo?.key === 'rooms' && editingRoomType !== null);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
@@ -870,7 +985,7 @@ const AddDynamicWizard = () => {
           <ArrowLeft size={20} />
         </button>
         <div className="text-sm font-bold text-gray-900">
-          {step <= 9 ? `Step ${step} of 9` : 'Registration Complete'}
+          {step <= totalSteps ? `Step ${step} of ${totalSteps}` : 'Complete'}
         </div>
         <button onClick={handleExit} className="p-2 -mr-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
           <X size={20} />
@@ -878,7 +993,7 @@ const AddDynamicWizard = () => {
       </header>
 
       <div className="w-full h-1 bg-gray-200 sticky top-16 z-20">
-        <div className="h-full bg-emerald-600 transition-all duration-500 ease-out" style={{ width: `${(step / 9) * 100}%` }} />
+        <div className="h-full bg-emerald-600 transition-all duration-500 ease-out" style={{ width: `${(step / totalSteps) * 100}%` }} />
       </div>
 
       <main className="flex-1 w-full max-w-2xl mx-auto p-4 md:p-6 pb-32">
@@ -887,7 +1002,7 @@ const AddDynamicWizard = () => {
         </div>
 
         <div className="bg-white md:p-6 md:rounded-2xl md:shadow-sm md:border md:border-gray-100 space-y-6">
-          {step === 1 && (
+          {currentStepInfo?.key === 'basic' && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 mb-4">
                 <Home size={18} className="text-[#004F4D]" />
@@ -896,16 +1011,16 @@ const AddDynamicWizard = () => {
               {error && <div className="text-red-600 text-sm mb-3">{error}</div>}
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 mb-1 block">{isTent ? 'Property / Camp Name' : 'Hotel Name'}</label>
+                  <label className="text-xs font-semibold text-gray-500 mb-1 block">{isTent ? 'Property / Camp Name' : isPlot ? 'Project / Plot Name' : isBuy ? 'Property Title' : isRent ? 'Property / Society Name' : 'Property / Hotel Name'}</label>
                   <input
                     className="input w-full"
-                    placeholder={isTent ? "e.g. Riverside Jungle Camp" : "e.g. Grand Royal Hotel"}
+                    placeholder={isTent ? "e.g. Riverside Jungle Camp" : isRent ? "e.g. Green Valley Apartments" : "e.g. Grand Royal Hotel"}
                     value={propertyForm.propertyName}
                     onChange={e => updatePropertyForm('propertyName', e.target.value)}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 mb-1 block">Short Description</label>
+                  <label className="text-xs font-semibold text-gray-500 mb-1 block">{isBuy ? 'Property Summary' : 'Short Description'}</label>
                   <textarea
                     className="input w-full"
                     placeholder="Brief summary for listings..."
@@ -914,11 +1029,11 @@ const AddDynamicWizard = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 mb-1 block">Detailed Description</label>
-                  <textarea className="input w-full h-24" placeholder={isTent ? "Describe your campsite, tents, and experience..." : "Tell guests what makes your hotel unique..."} value={propertyForm.description} onChange={e => updatePropertyForm('description', e.target.value)} />
+                  <label className="text-xs font-semibold text-gray-500 mb-1 block">{isBuy ? 'Property Details' : 'Detailed Description'}</label>
+                  <textarea className="input w-full h-24" placeholder={isTent ? "Describe your campsite, tents, and experience..." : isRent ? "Describe your property, amenities, etc..." : isBuy ? "Describe your property features, condition, and highlights" : "Tell guests what makes your hotel unique..."} value={propertyForm.description} onChange={e => updatePropertyForm('description', e.target.value)} />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 mb-1 block">Contact Number (For Guest Inquiries)</label>
+                  <label className="text-xs font-semibold text-gray-500 mb-1 block">{isBuy ? 'Contact Number (For Buyer Inquiries)' : 'Contact Number (For Guest Inquiries)'}</label>
                   <input
                     className="input w-full"
                     placeholder="e.g. +91 9876543210"
@@ -930,7 +1045,188 @@ const AddDynamicWizard = () => {
             </div>
           )}
 
-          {step === 2 && (
+          {currentStepInfo?.key === 'details' && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <Home size={18} className="text-[#004F4D]" />
+                <h2 className="text-lg font-bold">Property Details</h2>
+              </div>
+              {error && <div className="text-red-600 text-sm mb-3">{error}</div>}
+
+              {isRent ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Monthly Rent (₹)</label>
+                      <input type="number" className="input w-full" value={propertyForm.rentDetails?.monthlyRent || ''} onChange={e => updatePropertyForm(['rentDetails', 'monthlyRent'], e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Maintenance (₹)</label>
+                      <input type="number" className="input w-full" value={propertyForm.rentDetails?.maintenanceCharges || ''} onChange={e => updatePropertyForm(['rentDetails', 'maintenanceCharges'], e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Type</label>
+                      <select className="input w-full" value={propertyForm.rentDetails?.type || ''} onChange={e => updatePropertyForm(['rentDetails', 'type'], e.target.value)}>
+                        <option value="">Select Type</option>
+                        <option value="1BHK">1 BHK</option>
+                        <option value="2BHK">2 BHK</option>
+                        <option value="3BHK">3 BHK</option>
+                        <option value="Villa">Villa</option>
+                        <option value="Studio">Studio</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Furnishing</label>
+                      <select className="input w-full" value={propertyForm.rentDetails?.furnishing || ''} onChange={e => updatePropertyForm(['rentDetails', 'furnishing'], e.target.value)}>
+                        <option value="">Select</option>
+                        <option value="Fully">Fully Furnished</option>
+                        <option value="Semi">Semi Furnished</option>
+                        <option value="Unfurnished">Unfurnished</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Tenant Preference</label>
+                      <select className="input w-full" value={propertyForm.rentDetails?.tenantPreference || ''} onChange={e => updatePropertyForm(['rentDetails', 'tenantPreference'], e.target.value)}>
+                        <option value="">Any</option>
+                        <option value="Family">Family</option>
+                        <option value="Bachelors">Bachelors</option>
+                        <option value="Corporate">Corporate</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              ) : isBuy ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Expected Price (₹)</label>
+                      <input type="number" className="input w-full" value={propertyForm.buyDetails?.expectedPrice || ''} onChange={e => updatePropertyForm(['buyDetails', 'expectedPrice'], e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Super Built-up Area</label>
+                      <div className="flex gap-2">
+                        <input type="number" className="input w-full" value={propertyForm.buyDetails?.area?.superBuiltUp || ''} onChange={e => updatePropertyForm(['buyDetails', 'area', 'superBuiltUp'], e.target.value)} />
+                        <span className="flex items-center text-sm font-bold text-gray-500">sqft</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Type</label>
+                      <select className="input w-full" value={propertyForm.buyDetails?.type || ''} onChange={e => updatePropertyForm(['buyDetails', 'type'], e.target.value)}>
+                        <option value="">Select Type</option>
+                        <option value="Apartment">Apartment</option>
+                        <option value="Villa">Villa</option>
+                        <option value="Independent House">Independent House</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Ownership</label>
+                      <select className="input w-full" value={propertyForm.buyDetails?.ownership || ''} onChange={e => updatePropertyForm(['buyDetails', 'ownership'], e.target.value)}>
+                        <option value="">Select</option>
+                        <option value="Freehold">Freehold</option>
+                        <option value="Leasehold">Leasehold</option>
+                        <option value="Co-operative">Co-operative Society</option>
+                        <option value="Power of Attorney">Power of Attorney</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              ) : isPlot ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Expected Price (₹)</label>
+                      <input type="number" className="input w-full" value={propertyForm.plotDetails?.expectedPrice || ''} onChange={e => updatePropertyForm(['plotDetails', 'expectedPrice'], e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Plot Area (sqyrd)</label>
+                      <input type="number" className="input w-full" value={propertyForm.plotDetails?.plotArea || ''} onChange={e => updatePropertyForm(['plotDetails', 'plotArea'], e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Dimensions (ft)</label>
+                      <div className="flex gap-2 items-center">
+                        <input type="number" placeholder="Length" className="input w-full" value={propertyForm.plotDetails?.dimensions?.length || ''} onChange={e => updatePropertyForm(['plotDetails', 'dimensions', 'length'], e.target.value)} />
+                        <span>x</span>
+                        <input type="number" placeholder="Breadth" className="input w-full" value={propertyForm.plotDetails?.dimensions?.breadth || ''} onChange={e => updatePropertyForm(['plotDetails', 'dimensions', 'breadth'], e.target.value)} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Facing</label>
+                      <select className="input w-full" value={propertyForm.plotDetails?.facing || ''} onChange={e => updatePropertyForm(['plotDetails', 'facing'], e.target.value)}>
+                        <option value="">Select Facing</option>
+                        <option value="North">North</option>
+                        <option value="South">South</option>
+                        <option value="East">East</option>
+                        <option value="West">West</option>
+                        <option value="North-East">North-East</option>
+                        <option value="North-West">North-West</option>
+                        <option value="South-East">South-East</option>
+                        <option value="South-West">South-West</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Land Type</label>
+                      <select className="input w-full" value={propertyForm.plotDetails?.landType || 'Residential'} onChange={e => updatePropertyForm(['plotDetails', 'landType'], e.target.value)}>
+                        <option value="Residential">Residential</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="Agricultural">Agricultural</option>
+                        <option value="Industrial">Industrial</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Road Width (ft)</label>
+                      <input type="number" className="input w-full" placeholder="e.g. 30" value={propertyForm.plotDetails?.roadWidth || ''} onChange={e => updatePropertyForm(['plotDetails', 'roadWidth'], e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Boundary Marked</label>
+                      <select className="input w-full" value={propertyForm.plotDetails?.boundaryMarked ? 'true' : 'false'} onChange={e => updatePropertyForm(['plotDetails', 'boundaryMarked'], e.target.value === 'true')}>
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Electricity Available</label>
+                      <select className="input w-full" value={propertyForm.plotDetails?.electricityAvailable ? 'true' : 'false'} onChange={e => updatePropertyForm(['plotDetails', 'electricityAvailable'], e.target.value === 'true')}>
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Water Source</label>
+                      <input type="text" className="input w-full" placeholder="e.g. Borewell, Municipal" value={propertyForm.plotDetails?.waterSource || ''} onChange={e => updatePropertyForm(['plotDetails', 'waterSource'], e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Approval Authority</label>
+                      <input type="text" className="input w-full" placeholder="e.g. DTCP, RERA" value={propertyForm.plotDetails?.approvalAuthority || ''} onChange={e => updatePropertyForm(['plotDetails', 'approvalAuthority'], e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Soil Type</label>
+                      <input type="text" className="input w-full" placeholder="e.g. Red Soil, Black Soil" value={propertyForm.plotDetails?.soilType || ''} onChange={e => updatePropertyForm(['plotDetails', 'soilType'], e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Nearby Landmark</label>
+                      <input type="text" className="input w-full" placeholder="e.g. Near XYZ Mall" value={propertyForm.plotDetails?.nearbyLandmark || ''} onChange={e => updatePropertyForm(['plotDetails', 'nearbyLandmark'], e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
+
+          {currentStepInfo?.key === 'location' && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 mb-4">
                 <MapPin size={18} className="text-[#004F4D]" />
@@ -1007,10 +1303,10 @@ const AddDynamicWizard = () => {
             </div>
           )}
 
-          {step === 3 && (
+          {currentStepInfo?.key === 'amenities' && !isPlot && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {(isTent ? [...TENT_AMENITIES, ...HOTEL_AMENITIES] : HOTEL_AMENITIES).map(am => {
+                {(isTent ? [...TENT_AMENITIES, ...HOTEL_AMENITIES] : isRent ? RENT_AMENITIES : isBuy ? SELL_AMENITIES : HOTEL_AMENITIES).map(am => {
                   const isSelected = propertyForm.amenities.includes(am);
                   return (
                     <button
@@ -1037,7 +1333,7 @@ const AddDynamicWizard = () => {
             </div>
           )}
 
-          {step === 4 && (
+          {currentStepInfo?.key === 'nearby' && (
             <div className="space-y-4">
               {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>}
 
@@ -1179,7 +1475,7 @@ const AddDynamicWizard = () => {
             </div>
           )}
 
-          {step === 5 && (
+          {currentStepInfo?.key === 'images' && (
             <div className="space-y-6">
               {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>}
 
@@ -1268,10 +1564,22 @@ const AddDynamicWizard = () => {
                   if (e.target.files?.length) uploadImages(e.target.files, 'gallery', urls => updatePropertyForm('propertyImages', [...propertyForm.propertyImages, ...urls]));
                 }} />
               </div>
+
+              {/* Video URL */}
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-800">Property Video URL</label>
+                <input
+                  className="input w-full"
+                  placeholder="e.g. YouTube or Drive Link"
+                  value={propertyForm.videoUrl || ''}
+                  onChange={e => updatePropertyForm('videoUrl', e.target.value)}
+                />
+                <p className="text-xs text-gray-400">Add a link to a video tour of your property.</p>
+              </div>
             </div>
           )}
 
-          {step === 6 && (
+          {currentStepInfo?.key === 'rooms' && (
             <div className="space-y-4">
               {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>}
 
@@ -1469,7 +1777,7 @@ const AddDynamicWizard = () => {
             </div>
           )}
 
-          {step === 7 && (
+          {currentStepInfo?.key === 'rules' && (
             <div className="space-y-6">
               {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>}
 
@@ -1557,94 +1865,87 @@ const AddDynamicWizard = () => {
             </div>
           )}
 
-          {
-            step === 8 && (
-              <div className="space-y-6">
-                {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>}
+          {currentStepInfo?.key === 'docs' && (
+            <div className="space-y-6">
+              {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>}
 
-                <div className="space-y-4">
-                  <div className="text-sm font-semibold text-gray-700">Please provide the following documents</div>
-                  <div className="grid gap-3">
-                    {propertyForm.documents.map((doc, idx) => (
-                      <div key={idx} className="p-4 border border-gray-200 rounded-2xl bg-white hover:border-emerald-200 transition-colors shadow-sm">
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <div className="font-bold text-gray-900">{doc.name}</div>
-                            <div className="text-xs text-gray-400 mt-0.5">Optional document</div>
-                          </div>
-                          {doc.fileUrl ? (
-                            <div className="bg-emerald-50 text-emerald-700 p-1.5 rounded-full"><CheckCircle size={18} /></div>
-                          ) : (
-                            <div className="bg-gray-100 text-gray-400 p-1.5 rounded-full"><FileText size={18} /></div>
-                          )}
+              <div className="space-y-4">
+                <div className="text-sm font-semibold text-gray-700">Please provide the following documents</div>
+                <div className="grid gap-3">
+                  {propertyForm.documents.map((doc, idx) => (
+                    <div key={idx} className="p-4 border border-gray-200 rounded-2xl bg-white hover:border-emerald-200 transition-colors shadow-sm">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <div className="font-bold text-gray-900">{doc.name}</div>
+                          <div className="text-xs text-gray-400 mt-0.5">Optional document</div>
                         </div>
-
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => isFlutter
-                              ? handleCameraUpload(`doc_${idx}`, url => {
-                                const next = [...propertyForm.documents];
-                                next[idx].fileUrl = url;
-                                updatePropertyForm('documents', next);
-                              })
-                              : documentInputRefs.current[idx]?.click()
-                            }
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed text-sm font-bold transition-all ${doc.fileUrl
-                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                              : 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-white hover:border-emerald-400 hover:text-emerald-600'
-                              }`}
-                          >
-                            {uploading === `doc_${idx}` ? (
-                              <><Loader2 size={16} className="animate-spin" /> Uploading...</>
-                            ) : doc.fileUrl ? (
-                              <>Change File</>
-                            ) : (
-                              <><Plus size={16} /> Upload</>
-                            )}
-                          </button>
-                          {doc.fileUrl && (
-                            <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="p-2.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors border border-gray-200 hover:border-emerald-200 bg-white">
-                              <Search size={18} />
-                            </a>
-                          )}
-                        </div>
-
-                        <input
-                          type="file"
-                          className="hidden"
-                          ref={el => (documentInputRefs.current[idx] = el)}
-                          onChange={e => {
-                            const file = e.target.files[0];
-                            if (!file) return;
-                            uploadImages([file], `doc_${idx}`, urls => {
-                              if (urls[0]) {
-                                const updated = [...propertyForm.documents];
-                                updated[idx] = { ...updated[idx], fileUrl: urls[0] };
-                                updatePropertyForm('documents', updated);
-                              }
-                            });
-                            e.target.value = '';
-                          }}
-                        />
+                        {doc.fileUrl ? (
+                          <div className="bg-emerald-50 text-emerald-700 p-1.5 rounded-full"><CheckCircle size={18} /></div>
+                        ) : (
+                          <div className="bg-gray-100 text-gray-400 p-1.5 rounded-full"><FileText size={18} /></div>
+                        )}
                       </div>
-                    ))}
-                  </div>
+
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => isFlutter
+                            ? handleCameraUpload(`doc_${idx}`, url => {
+                              const next = [...propertyForm.documents];
+                              next[idx].fileUrl = url;
+                              updatePropertyForm('documents', next);
+                            })
+                            : documentInputRefs.current[idx]?.click()
+                          }
+                          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed text-sm font-bold transition-all ${doc.fileUrl
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            : 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-white hover:border-emerald-400 hover:text-emerald-600'
+                            }`}
+                        >
+                          {uploading === `doc_${idx}` ? (
+                            <><Loader2 size={16} className="animate-spin" /> Uploading...</>
+                          ) : doc.fileUrl ? (
+                            <>Change File</>
+                          ) : (
+                            <><Plus size={16} /> Upload</>
+                          )}
+                        </button>
+                        {doc.fileUrl && (
+                          <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="p-2.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors border border-gray-200 hover:border-emerald-200 bg-white">
+                            <Search size={18} />
+                          </a>
+                        )}
+                      </div>
+
+                      <input
+                        type="file"
+                        className="hidden"
+                        ref={el => (documentInputRefs.current[idx] = el)}
+                        onChange={e => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+                          uploadImages([file], `doc_${idx}`, urls => {
+                            if (urls[0]) {
+                              const updated = [...propertyForm.documents];
+                              updated[idx] = { ...updated[idx], fileUrl: urls[0] };
+                              updatePropertyForm('documents', updated);
+                            }
+                          });
+                          e.target.value = '';
+                        }}
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
-            )
+            </div>
+          )
           }
 
           {
-            step === 3 && (
+            step === 3 && !isRent && !isPlot && (
               <div className="space-y-6">
-                <div className="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 flex gap-3">
-                  <div className="bg-emerald-100 text-emerald-700 p-2 rounded-full h-fit"><CheckCircle size={20} /></div>
-                  <div>
-                    <h3 className="font-bold text-gray-900">{isTent ? 'Camping Amenities' : 'Property Amenities'}</h3>
-                    <p className="text-xs text-gray-600 mt-1">Select all the amenities available at your {isTent ? 'campsite' : 'property'}.</p>
-                  </div>
-                </div>
+
 
                 <div className="grid grid-cols-2 gap-3">
                   {(isTent ? [...TENT_AMENITIES, ...HOTEL_AMENITIES] : HOTEL_AMENITIES).map((amenity) => (
@@ -1669,7 +1970,7 @@ const AddDynamicWizard = () => {
             )
           }
           {
-            step === 9 && (
+            currentStepInfo?.key === 'review' && step !== 10 && (
               <div className="space-y-6">
                 <div className="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 flex gap-3">
                   <div className="bg-emerald-100 text-emerald-700 p-2 rounded-full h-fit"><CheckCircle size={20} /></div>
@@ -1692,34 +1993,215 @@ const AddDynamicWizard = () => {
                     </div>
                   </div>
 
-                  <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
-                    <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2 mb-3">{isTent ? 'Tent / Unit Types' : 'Room Types'} ({roomTypes.length})</h3>
-                    {roomTypes.length > 0 ? (
-                      <div className="space-y-2">
-                        {roomTypes.map((rt, i) => (
-                          <div key={i} className="flex justify-between items-center text-sm">
-                            <span className="text-gray-600 font-medium">{rt.name}</span>
-                            <span className="font-bold text-gray-900">₹{rt.pricePerNight}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : <div className="text-xs text-red-500 font-medium bg-red-50 p-2 rounded-lg">No {isTent ? 'tent types' : 'room types'} added!</div>}
-                  </div>
-
-                  <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
-                    <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2 mb-3">Documents ({propertyForm.documents.filter(d => d.fileUrl).length}/{propertyForm.documents.length})</h3>
-                    <div className="space-y-2">
-                      {propertyForm.documents.map((doc, i) => (
-                        <div key={i} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            {doc.fileUrl ? <CheckCircle size={14} className="text-emerald-500" /> : <div className="w-3.5 h-3.5 rounded-full border border-gray-300 bg-gray-50"></div>}
-                            <span className={doc.fileUrl ? 'text-gray-700' : 'text-gray-500'}>{doc.name}</span>
-                          </div>
-                          <span className="text-xs text-gray-400">{doc.fileUrl ? 'Attached' : 'Optional'}</span>
+                  {isRent ? (
+                    <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
+                      <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2 mb-3">Rent Details</h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Type</span>
+                          <span className="font-medium text-gray-900">{propertyForm.rentDetails?.type || '-'}</span>
                         </div>
-                      ))}
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Monthly Rent</span>
+                          <span className="font-bold text-emerald-600">₹{propertyForm.rentDetails?.monthlyRent || '0'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Maintenance</span>
+                          <span className="font-medium text-gray-900">₹{propertyForm.rentDetails?.maintenanceCharges || '0'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Furnishing</span>
+                          <span className="font-medium text-gray-900">{propertyForm.rentDetails?.furnishing || '-'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Tenant Preference</span>
+                          <span className="font-medium text-gray-900">{propertyForm.rentDetails?.tenantPreference || 'Any'}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ) : isBuy ? (
+                    <>
+                      <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
+                        <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2 mb-3">Sale Details</h3>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Property Type</span>
+                            <span className="font-medium text-gray-900">{propertyForm.buyDetails?.type || '-'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Expected Price</span>
+                            <span className="font-bold text-emerald-600">₹{propertyForm.buyDetails?.expectedPrice || '0'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Super Built-up Area</span>
+                            <span className="font-medium text-gray-900">{propertyForm.buyDetails?.area?.superBuiltUp || '-'} sqft</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Ownership</span>
+                            <span className="font-medium text-gray-900">{propertyForm.buyDetails?.ownership || '-'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
+                        <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2 mb-3">Amenities ({propertyForm.amenities.length})</h3>
+                        {propertyForm.amenities.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {propertyForm.amenities.map((amenity, i) => (
+                              <span key={i} className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">
+                                {amenity}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-500">No amenities added</div>
+                        )}
+                      </div>
+
+                      <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
+                        <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2 mb-3">Images</h3>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="text-xs text-gray-600 mb-2">Cover Image</div>
+                            {propertyForm.coverImage ? (
+                              <img src={propertyForm.coverImage} alt="Cover" className="w-full h-32 object-cover rounded-lg" />
+                            ) : (
+                              <div className="text-xs text-red-500 bg-red-50 p-2 rounded-lg">No cover image</div>
+                            )}
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-600 mb-2">Gallery ({propertyForm.propertyImages.length})</div>
+                            {propertyForm.propertyImages.length > 0 ? (
+                              <div className="grid grid-cols-4 gap-2">
+                                {propertyForm.propertyImages.slice(0, 4).map((img, i) => (
+                                  <img key={i} src={img} alt={`Gallery ${i + 1}`} className="w-full h-16 object-cover rounded-lg" />
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-red-500 bg-red-50 p-2 rounded-lg">No gallery images</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
+                        <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2 mb-3">Documents ({propertyForm.documents.filter(d => d.fileUrl).length}/{propertyForm.documents.length})</h3>
+                        <div className="space-y-2">
+                          {propertyForm.documents.map((doc, i) => (
+                            <div key={i} className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2">
+                                {doc.fileUrl ? <CheckCircle size={14} className="text-emerald-500" /> : <div className="w-3.5 h-3.5 rounded-full border border-gray-300 bg-gray-50"></div>}
+                                <span className={doc.fileUrl ? 'text-gray-700' : 'text-gray-500'}>{doc.name}</span>
+                              </div>
+                              <span className="text-xs text-gray-400">{doc.fileUrl ? 'Attached' : 'Optional'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  ) : isPlot ? (
+                    <>
+                      <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
+                        <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2 mb-3">Plot Details</h3>
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Plot Area</span>
+                            <span className="font-medium text-gray-900">{propertyForm.plotDetails?.plotArea || '-'} {propertyForm.plotDetails?.unit || 'sqyrd'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Expected Price</span>
+                            <span className="font-bold text-emerald-600">₹{propertyForm.plotDetails?.expectedPrice?.toLocaleString() || '0'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Dimensions</span>
+                            <span className="font-medium text-gray-900">{propertyForm.plotDetails?.dimensions?.length || '-'} x {propertyForm.plotDetails?.dimensions?.breadth || '-'} ft</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Facing</span>
+                            <span className="font-medium text-gray-900">{propertyForm.plotDetails?.facing || '-'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Land Type</span>
+                            <span className="font-medium text-gray-900">{propertyForm.plotDetails?.landType || '-'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Road Width</span>
+                            <span className="font-medium text-gray-900">{propertyForm.plotDetails?.roadWidth ? `${propertyForm.plotDetails.roadWidth} ft` : '-'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Boundary Marked</span>
+                            <span className={`font-medium ${propertyForm.plotDetails?.boundaryMarked ? 'text-green-600' : 'text-gray-900'}`}>{propertyForm.plotDetails?.boundaryMarked ? 'Yes' : 'No'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Electricity</span>
+                            <span className={`font-medium ${propertyForm.plotDetails?.electricityAvailable ? 'text-green-600' : 'text-gray-900'}`}>{propertyForm.plotDetails?.electricityAvailable ? 'Available' : 'Not Available'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Water Source</span>
+                            <span className="font-medium text-gray-900">{propertyForm.plotDetails?.waterSource || '-'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Approval Authority</span>
+                            <span className="font-medium text-gray-900">{propertyForm.plotDetails?.approvalAuthority || '-'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Soil Type</span>
+                            <span className="font-medium text-gray-900">{propertyForm.plotDetails?.soilType || '-'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Nearby Landmark</span>
+                            <span className="font-medium text-gray-900">{propertyForm.plotDetails?.nearbyLandmark || '-'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
+                        <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2 mb-3">Documents ({propertyForm.documents.filter(d => d.fileUrl).length}/{propertyForm.documents.length})</h3>
+                        <div className="space-y-2">
+                          {propertyForm.documents.map((doc, i) => (
+                            <div key={i} className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2">
+                                {doc.fileUrl ? <CheckCircle size={14} className="text-emerald-500" /> : <div className="w-3.5 h-3.5 rounded-full border border-gray-300 bg-gray-50"></div>}
+                                <span className={doc.fileUrl ? 'text-gray-700' : 'text-gray-500'}>{doc.name}</span>
+                              </div>
+                              <span className="text-xs text-gray-400">{doc.fileUrl ? 'Attached' : 'Optional'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
+                        <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2 mb-3">{isTent ? 'Tent / Unit Types' : 'Room Types'} ({roomTypes.length})</h3>
+                        {roomTypes.length > 0 ? (
+                          <div className="space-y-2">
+                            {roomTypes.map((rt, i) => (
+                              <div key={i} className="flex justify-between items-center text-sm">
+                                <span className="text-gray-600 font-medium">{rt.name}</span>
+                                <span className="font-bold text-gray-900">₹{rt.pricePerNight}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : <div className="text-xs text-red-500 font-medium bg-red-50 p-2 rounded-lg">No {isTent ? 'tent types' : 'room types'} added!</div>}
+                      </div>
+
+                      <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
+                        <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2 mb-3">Documents ({propertyForm.documents.filter(d => d.fileUrl).length}/{propertyForm.documents.length})</h3>
+                        <div className="space-y-2">
+                          {propertyForm.documents.map((doc, i) => (
+                            <div key={i} className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2">
+                                {doc.fileUrl ? <CheckCircle size={14} className="text-emerald-500" /> : <div className="w-3.5 h-3.5 rounded-full border border-gray-300 bg-gray-50"></div>}
+                                <span className={doc.fileUrl ? 'text-gray-700' : 'text-gray-500'}>{doc.name}</span>
+                              </div>
+                              <span className="text-xs text-gray-400">{doc.fileUrl ? 'Attached' : 'Optional'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )
@@ -1767,11 +2249,11 @@ const AddDynamicWizard = () => {
           )}
           <button
             onClick={handleNext}
-            disabled={loading || (step === 6 && roomTypes.length === 0)}
+            disabled={loading || (currentStepInfo?.key === 'rooms' && roomTypes.length === 0)}
             className="flex-1 px-6 py-3 rounded-xl bg-emerald-600 text-white font-bold shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           >
             {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-            {step === 9 ? (loading ? 'Submitting...' : 'Submit Property') : 'Continue'}
+            {currentStepInfo?.key === 'review' ? (loading ? 'Submitting...' : 'Submit Property') : 'Continue'}
           </button>
         </div>
       </footer>

@@ -509,7 +509,7 @@ export const getPublicProperties = async (req, res) => {
         let hasPgCoLivingCategory = false;
         for (const cat of categories) {
           const dn = (cat.displayName || cat.name || '').toLowerCase();
-          if (dn === 'pg' || dn === 'hostel' || dn === 'pg/co-living' || dn === 'co-living') {
+          if (dn === 'pg' || dn === 'hostel' || dn === 'pg/co-living' || dn === 'co-living' || dn === 'pg/co-livinig') {
             fallbackPropertyTypes.add('pg').add('hostel');
             hasPgCoLivingCategory = true;
           }

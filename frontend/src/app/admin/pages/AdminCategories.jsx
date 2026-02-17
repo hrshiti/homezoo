@@ -264,13 +264,7 @@ const AdminCategories = () => {
                     <h1 className="text-2xl font-bold text-gray-900">Property Categories</h1>
                     <p className="text-gray-500 text-sm mt-1">Manage dynamic property types and tabs</p>
                 </div>
-                <button
-                    onClick={handleCreate}
-                    className="bg-amber-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-amber-700 transition-colors shadow-sm"
-                >
-                    <Plus size={20} />
-                    Add Category
-                </button>
+                {/* Add Category Button Removed */}
             </div>
 
             {/* Categories List */}
@@ -347,13 +341,7 @@ const AdminCategories = () => {
                                                 >
                                                     <Edit2 size={18} />
                                                 </button>
-                                                <button
-                                                    onClick={() => handleDelete(cat._id)}
-                                                    className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
+                                                {/* Delete Button Removed */}
                                             </div>
                                         </td>
                                     </tr>

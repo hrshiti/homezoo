@@ -21,40 +21,87 @@ const PropertyTypeFilter = ({ selectedType, onSelectType }) => {
       try {
         const categories = await categoryService.getActiveCategories();
 
-        const displayLabel = (name) => {
-          const n = (name || '').toLowerCase();
-          if (n === 'hostel' || n === 'pg' || n === 'pg/co-living' || n === 'co-living') return 'PG/Co-Living';
-          return name;
-        };
-        
-        // Group categories by normalized label to combine PG, Hostel, PG/Co-living into one option
-        const groupedMap = new Map();
-        
-        categories.forEach(cat => {
-          const normalizedLabel = displayLabel(cat.displayName) || cat.displayName;
-          if (!groupedMap.has(normalizedLabel)) {
-            groupedMap.set(normalizedLabel, {
-              ids: [],
-              label: normalizedLabel,
-              icon: LucideIcons[cat.icon] || LucideIcons.HelpCircle,
-              isDynamic: true
-            });
-          }
-          groupedMap.get(normalizedLabel).ids.push(cat._id);
-        });
-        
-        // Convert grouped map to array, using comma-separated IDs for grouped categories
-        const dynamicTypes = Array.from(groupedMap.values()).map(group => ({
-          id: group.ids.length === 1 ? group.ids[0] : group.ids.join(','), // Send all IDs if grouped
-          label: group.label,
-          icon: group.icon,
-          isDynamic: true
-        }));
+        // We want ONLY these specific tabs in this specific order
+        // 1. All (Already added as ALL_OPTION)
+        // 2. PG/Co-Living
+        // 3. Rent
+        // 4. Buy
+        // 5. Plot
 
-        setAllTypes([ALL_OPTION, ...STATIC_TYPES, ...dynamicTypes]);
+        const findCategoryIds = (names) => {
+          const searchNames = Array.isArray(names) ? names : [names];
+          const found = categories.filter(c =>
+            searchNames.some(n =>
+              (c.displayName || '').toLowerCase() === n.toLowerCase() ||
+              (c.name || '').toLowerCase() === n.toLowerCase()
+            )
+          );
+          return found.map(c => c._id);
+        };
+
+        // PG/Co-Living often groups multiple categories
+        const pgIds = findCategoryIds(['hostel', 'pg', 'pg/co-living', 'co-living', 'pg/co-livinig']);
+        const rentIds = findCategoryIds('Rent');
+        const buyIds = findCategoryIds('Buy');
+        const plotIds = findCategoryIds(['Plot', 'Plots']);
+
+        const staticList = [
+
+          {
+            id: pgIds.length > 0 ? pgIds.join(',') : null,
+            label: 'PG/Co-Living',
+            icon: LucideIcons.BedDouble, // Importing lucide-react as LucideIcons
+            isDynamic: true
+          },
+          {
+            id: rentIds.length > 0 ? rentIds.join(',') : null,
+            label: 'Rent',
+            icon: LucideIcons.Home,
+            isDynamic: true
+          },
+          {
+            id: buyIds.length > 0 ? buyIds.join(',') : null,
+            label: 'Buy',
+            icon: LucideIcons.Landmark,
+            isDynamic: true
+          },
+          {
+            id: plotIds.length > 0 ? plotIds.join(',') : null,
+            label: 'Plot',
+            icon: LucideIcons.TreePine,
+            isDynamic: true
+          }
+        ];
+
+        // Filter out any that didn't resolve an ID if strictly necessary, 
+        // OR keep them disabled/generic. Requirements say "static category", 
+        // so we show them even if ID is missing (though functionality might be limited).
+        // However, for search filter, having an ID is crucial. 
+        // Let's filter out ones where ID is null to avoid broken filters, 
+        // but arguably if they are "static" they should appear. 
+        // For now, checks if ID exists to avoid broken behaviour.
+
+        const validStaticList = staticList.filter(item => item.id !== null);
+
+        // If you want them to ALWAYS appear even if backend is missing them (and thus broken), 
+        // remove the filter. But better to show only working ones or all.
+        // User said "static category... admin ke hatane per na hate".
+        // This implies even if Admin deletes 'Rent', the tab should stay (but maybe be empty).
+        // So we will display them all, but ID will be null (handling in parent/search needed? 
+        // If ID is null, filtering won't work).
+
+        // Let's stick to showing them.
+        setAllTypes([ALL_OPTION, ...staticList]);
+
       } catch (error) {
         console.error("Error loading categories:", error);
-        setAllTypes([ALL_OPTION, ...STATIC_TYPES]);
+        // Fallback to static list without IDs if fetch fails
+        setAllTypes([ALL_OPTION,
+          { label: 'PG/Co-Living', icon: LucideIcons.BedDouble, id: null },
+          { label: 'Rent', icon: LucideIcons.Home, id: null },
+          { label: 'Buy', icon: LucideIcons.Landmark, id: null },
+          { label: 'Plot', icon: LucideIcons.TreePine, id: null }
+        ]);
       }
     };
 

@@ -5,7 +5,7 @@ import { propertyService, legalService, reviewService, offerService, availabilit
 import {
   MapPin, Star, Share2, Heart, ArrowLeft,
   Users, Calendar, Loader2, ChevronLeft, ChevronRight, MessageSquare, Tag, X, Gift,
-  CheckCircle, Shield, Info, Clock, Wifi, Coffee, Car
+  CheckCircle, Shield, Info, Clock, Wifi, Coffee, Car, Phone
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ModernDatePicker from '../../components/ui/ModernDatePicker';
@@ -315,7 +315,10 @@ const PropertyDetailsPage = () => {
 
   const {
     _id, name, address, images, description, avgRating: rating,
-    inventory, amenities, policies, config
+    inventory, amenities, policies, config,
+    pgDetails, rentDetails, buyDetails, plotDetails,
+    videoUrl, virtualTourLink, isVerified, isFeatured, isUrgent, isNegotiable,
+    contactNumber
   } = property;
 
   const hasInventory = inventory && inventory.length > 0;
@@ -523,10 +526,18 @@ const PropertyDetailsPage = () => {
     };
   };
 
-  const bookingBarPrice =
+  let bookingBarPrice =
     stayPricing.nights > 0
       ? stayPricing.perNight
-      : getRoomPrice(bookingRoom) || property.minPrice || null;
+      : getRoomPrice(bookingRoom) || property.minPrice;
+
+  if (!bookingBarPrice) {
+    if (rentDetails?.monthlyRent) bookingBarPrice = rentDetails.monthlyRent;
+    else if (buyDetails?.expectedPrice) bookingBarPrice = buyDetails.expectedPrice;
+    else if (plotDetails?.expectedPrice) bookingBarPrice = plotDetails.expectedPrice;
+  }
+
+  const priceLabel = rentDetails ? 'Monthly Rent' : (buyDetails || plotDetails) ? 'Asking Price' : 'Price per night';
 
   const priceBreakdown = getPriceBreakdown();
 
@@ -677,6 +688,10 @@ const PropertyDetailsPage = () => {
                 <span className="bg-surface/10 text-surface text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
                   {propertyType}
                 </span>
+                {isVerified && <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-100 flex items-center gap-1"><Shield size={10} className="fill-blue-600 text-blue-600" /> Verified</span>}
+                {isFeatured && <span className="bg-amber-50 text-amber-600 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-100 flex items-center gap-1"><Star size={10} className="fill-amber-600 text-amber-600" /> Featured</span>}
+                {isUrgent && <span className="bg-red-50 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded border border-red-100">Urgent</span>}
+                {isNegotiable && <span className="bg-green-50 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded border border-green-100">Negotiable</span>}
                 {rating !== undefined && rating !== null && (
                   <div className="flex items-center gap-1 bg-honey/10 text-honey-dark px-2 py-0.5 rounded text-[10px] font-bold">
                     <Star size={10} className="fill-honey text-honey" />
@@ -691,8 +706,8 @@ const PropertyDetailsPage = () => {
               </div>
             </div>
             <div className="hidden md:block text-right">
-              <p className="text-sm text-gray-500">Starting from</p>
-              <p className="text-2xl font-bold text-surface">₹{stayPricing.perNight || getRoomPrice(activeRoom) || property.minPrice || 'N/A'}</p>
+              <p className="text-sm text-gray-500">{priceLabel || 'Starting from'}</p>
+              <p className="text-2xl font-bold text-surface">₹{bookingBarPrice?.toLocaleString() || 'N/A'}</p>
               {stayPricing.nights > 0 && (
                 <p className="text-[11px] text-gray-400">
                   {stayPricing.nights} nights ({stayPricing.weekdayNights} weekday, {stayPricing.weekendNights} weekend)
@@ -706,9 +721,22 @@ const PropertyDetailsPage = () => {
           {/* Description */}
           <div className="mb-8">
             <h2 className="text-lg font-bold text-textDark mb-3">About this place</h2>
-            <p className="text-gray-600 leading-relaxed text-sm md:text-base">
+            <p className="text-gray-600 leading-relaxed text-sm md:text-base mb-4">
               {description || "No description available."}
             </p>
+            <div className="flex flex-wrap gap-3">
+              {videoUrl && (
+                <a href={videoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-bold text-sm">
+                  <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center"><div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[6px] border-l-red-600 border-b-[4px] border-b-transparent ml-0.5"></div></div>
+                  Watch Video
+                </a>
+              )}
+              {virtualTourLink && (
+                <a href={virtualTourLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors font-bold text-sm">
+                  <Users size={18} /> 360° Virtual Tour
+                </a>
+              )}
+            </div>
           </div>
 
           {/* Amenities - Dynamic Switching */}
@@ -741,17 +769,79 @@ const PropertyDetailsPage = () => {
             );
           })()}
           {/* Type Specific Info - Dynamic Rendering */}
-          {propertyType === 'PG' && config && (
-            <div className="mb-8 grid md:grid-cols-2 gap-4">
-              <div className="p-4 bg-yellow-50 rounded-xl">
-                <h3 className="font-bold text-yellow-900 mb-2">PG Details</h3>
-                <ul className="text-sm text-yellow-800 space-y-1">
-                  <li>Type: {config.pgType}</li>
-                  <li>Food: {config.mealsIncluded === 'Yes' ? `Included (${config.foodType})` : 'Not Included'}</li>
-                  <li>Notice Period: {config.noticePeriod}</li>
-                  {config.laundryService && <li>Laundry: {config.laundryService}</li>}
-                  {config.housekeeping && <li>Housekeeping: {config.housekeeping}</li>}
-                </ul>
+          {/* PG Details */}
+          {(propertyType === 'PG' || pgDetails) && (pgDetails || config) && (
+            <div className="mb-8 p-4 bg-yellow-50 rounded-xl border border-yellow-100">
+              <h3 className="font-bold text-yellow-900 mb-3">PG / Co-Living Details</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-yellow-900">
+                {pgDetails?.minStay && <div><span className="opacity-70 text-xs block">Min Stay</span>{pgDetails.minStay}</div>}
+                {pgDetails?.noticePeriod && <div><span className="opacity-70 text-xs block">Notice Period</span>{pgDetails.noticePeriod}</div>}
+                {pgDetails?.securityDeposit && <div><span className="opacity-70 text-xs block">Security Deposit</span>₹{pgDetails.securityDeposit}</div>}
+                {pgDetails?.availableFrom && <div><span className="opacity-70 text-xs block">Available From</span>{new Date(pgDetails.availableFrom).toLocaleDateString()}</div>}
+                <div><span className="opacity-70 text-xs block">Food</span>{pgDetails?.foodIncluded ? 'Included' : 'Not Included'}</div>
+                {/* Fallback to old config if pgDetails not present */}
+                {!pgDetails && config && (
+                  <>
+                    <div>Type: {config.pgType}</div>
+                    <div>Notice: {config.noticePeriod}</div>
+                  </>
+                )}
+              </div>
+              {pgDetails?.rules && (
+                <div className="mt-3 pt-3 border-t border-yellow-200/50">
+                  <span className="opacity-70 text-xs block mb-2 font-bold text-yellow-900">PG Rules</span>
+                  <div className="flex flex-wrap gap-2">
+                    {pgDetails.rules.smoking !== undefined && <span className={`px-2 py-1 rounded text-xs border ${pgDetails.rules.smoking ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700'}`}>Smoking: {pgDetails.rules.smoking ? 'Yes' : 'No'}</span>}
+                    {pgDetails.rules.drinking !== undefined && <span className={`px-2 py-1 rounded text-xs border ${pgDetails.rules.drinking ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700'}`}>Drinking: {pgDetails.rules.drinking ? 'Yes' : 'No'}</span>}
+                    {pgDetails.rules.visitors !== undefined && <span className={`px-2 py-1 rounded text-xs border ${pgDetails.rules.visitors ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700'}`}>Visitors: {pgDetails.rules.visitors ? 'Yes' : 'No'}</span>}
+                    {pgDetails.rules.curfew && <span className="px-2 py-1 rounded text-xs border border-yellow-200 bg-yellow-100 text-yellow-800">Curfew: {pgDetails.rules.curfew}</span>}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Rent Details */}
+          {(propertyType === 'Rent' || rentDetails) && rentDetails && (
+            <div className="mb-8 p-4 bg-blue-50 rounded-xl border border-blue-100">
+              <h3 className="font-bold text-blue-900 mb-3">Rental Details</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-blue-900">
+                <div><span className="opacity-70 text-xs block">Monthly Rent</span>₹{rentDetails.monthlyRent?.toLocaleString() || 'Not set'}</div>
+                <div><span className="opacity-70 text-xs block">Maintenance</span>₹{rentDetails.maintenanceCharges?.toLocaleString() || 0}</div>
+                <div><span className="opacity-70 text-xs block">Type</span>{rentDetails.type || 'Not specified'}</div>
+                <div><span className="opacity-70 text-xs block">Furnishing</span>{rentDetails.furnishing || 'Not specified'}</div>
+                <div><span className="opacity-70 text-xs block">Tenant Preference</span>{rentDetails.tenantPreference || 'Any'}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Buy Details */}
+          {(propertyType === 'Buy' || buyDetails) && buyDetails && (
+            <div className="mb-8 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+              <h3 className="font-bold text-emerald-900 mb-3">Property Details</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-emerald-900">
+                <div><span className="opacity-70 text-xs block">Type</span>{buyDetails.type}</div>
+                <div><span className="opacity-70 text-xs block">Area</span>{buyDetails.area?.superBuiltUp} {buyDetails.area?.unit}</div>
+                <div><span className="opacity-70 text-xs block">Ownership</span>{buyDetails.ownership}</div>
+                <div><span className="opacity-70 text-xs block">Floor</span>{buyDetails.floor?.current} / {buyDetails.floor?.total}</div>
+                <div><span className="opacity-70 text-xs block">Facing</span>{buyDetails.facing}</div>
+                <div><span className="opacity-70 text-xs block">Age</span>{buyDetails.propertyAge}</div>
+                {buyDetails.loanEligible && <div className="col-span-full flex gap-2 mt-1"><span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-bold">Loan Eligible</span></div>}
+              </div>
+            </div>
+          )}
+
+          {/* Plot Details */}
+          {(propertyType === 'Plot' || plotDetails) && plotDetails && (
+            <div className="mb-8 p-4 bg-green-50 rounded-xl border border-green-100">
+              <h3 className="font-bold text-green-900 mb-3">Plot Details</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-green-900">
+                <div><span className="opacity-70 text-xs block">Plot Area</span>{plotDetails.plotArea} {plotDetails.unit}</div>
+                <div><span className="opacity-70 text-xs block">Dimensions</span>{plotDetails.dimensions?.length} x {plotDetails.dimensions?.breadth}</div>
+                <div><span className="opacity-70 text-xs block">Facing</span>{plotDetails.facing}</div>
+                <div><span className="opacity-70 text-xs block">Land Type</span>{plotDetails.landType}</div>
+                <div><span className="opacity-70 text-xs block">Road Width</span>{plotDetails.roadWidth}</div>
+                <div><span className="opacity-70 text-xs block">Authority</span>{plotDetails.approvalAuthority}</div>
               </div>
             </div>
           )}
@@ -1333,7 +1423,7 @@ const PropertyDetailsPage = () => {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs text-gray-500">{priceBreakdown ? 'Total Amount' : 'Price per night'}</p>
+            <p className="text-xs text-gray-500">{priceBreakdown ? 'Total Amount' : priceLabel}</p>
             <p className="font-bold text-lg text-surface">
               ₹{priceBreakdown?.grandTotal?.toLocaleString() || bookingBarPrice?.toLocaleString() || 'N/A'}
             </p>
@@ -1361,18 +1451,24 @@ const PropertyDetailsPage = () => {
             )}
           </div>
           <div className="flex flex-1 md:flex-none gap-2">
-            <button
-              onClick={handleBook}
-              disabled={bookingLoading || checkingAvailability}
-              className="bg-surface text-white px-8 py-3 rounded-xl font-bold flex-1 md:w-64 disabled:opacity-70 disabled:cursor-not-allowed hover:bg-surface-dark transition-colors flex items-center justify-center gap-2"
-            >
-              {(bookingLoading || checkingAvailability) ? (
-                <>
-                  <Loader2 size={20} className="animate-spin" />
-                  <span>{checkingAvailability ? 'Checking...' : 'Processing...'}</span>
-                </>
-              ) : 'Book Now'}
-            </button>
+            {['Rent', 'Buy', 'Plot'].includes(propertyType) ? (
+              <a href={`tel:${contactNumber}`} className="bg-surface text-white px-8 py-3 rounded-xl font-bold flex-1 md:w-64 hover:bg-surface-dark transition-colors flex items-center justify-center gap-2">
+                <Phone size={20} /> Contact
+              </a>
+            ) : (
+              <button
+                onClick={handleBook}
+                disabled={bookingLoading || checkingAvailability}
+                className="bg-surface text-white px-8 py-3 rounded-xl font-bold flex-1 md:w-64 disabled:opacity-70 disabled:cursor-not-allowed hover:bg-surface-dark transition-colors flex items-center justify-center gap-2"
+              >
+                {(bookingLoading || checkingAvailability) ? (
+                  <>
+                    <Loader2 size={20} className="animate-spin" />
+                    <span>{checkingAvailability ? 'Checking...' : 'Processing...'}</span>
+                  </>
+                ) : 'Book Now'}
+              </button>
+            )}
           </div>
         </div>
       </div>

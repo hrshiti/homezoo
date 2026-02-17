@@ -40,10 +40,34 @@ const OverviewTab = ({ hotel }) => (
                         <span className="text-gray-500 font-bold uppercase text-[10px]">Joined Date</span>
                         <span className="font-bold text-gray-900">{hotel.createdAt ? new Date(hotel.createdAt).toLocaleDateString() : 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between">
-                        <span className="text-gray-500 font-bold uppercase text-[10px]">{hotel.propertyType === 'tent' ? 'Total Tent Types' : 'Total Room Types'}</span>
-                        <span className="font-bold text-gray-900">{hotel.rooms?.length || 0}</span>
-                    </div>
+                    {hotel.propertyType === 'plot' ? (
+                        <>
+                            <div className="flex justify-between">
+                                <span className="text-gray-500 font-bold uppercase text-[10px]">Plot Area</span>
+                                <span className="font-bold text-gray-900">{hotel.plotDetails?.plotArea || 'N/A'} {hotel.plotDetails?.unit || 'sqyrd'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-500 font-bold uppercase text-[10px]">Expected Price</span>
+                                <span className="font-bold text-gray-900">₹{hotel.plotDetails?.expectedPrice?.toLocaleString() || 'N/A'}</span>
+                            </div>
+                        </>
+                    ) : hotel.propertyType === 'buy' ? (
+                        <>
+                            <div className="flex justify-between">
+                                <span className="text-gray-500 font-bold uppercase text-[10px]">Property Type</span>
+                                <span className="font-bold text-gray-900">{hotel.buyDetails?.type || 'N/A'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-500 font-bold uppercase text-[10px]">Expected Price</span>
+                                <span className="font-bold text-gray-900">₹{hotel.buyDetails?.expectedPrice?.toLocaleString() || 'N/A'}</span>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex justify-between">
+                            <span className="text-gray-500 font-bold uppercase text-[10px]">{hotel.propertyType === 'tent' ? 'Total Tent Types' : 'Total Room Types'}</span>
+                            <span className="font-bold text-gray-900">{hotel.rooms?.length || 0}</span>
+                        </div>
+                    )}
                     <div className="flex justify-between">
                         <span className="text-gray-500 font-bold uppercase text-[10px]">Live On Platform</span>
                         <span className="font-bold text-gray-900 flex items-center gap-1">
@@ -89,42 +113,183 @@ const OverviewTab = ({ hotel }) => (
             </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Check In</h4>
-                <p className="text-sm font-bold text-gray-900">{hotel.checkInTime || 'Not set'}</p>
+        {hotel.propertyType === 'plot' ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Dimensions</h4>
+                    <p className="text-sm font-bold text-gray-900">
+                        {hotel.plotDetails?.dimensions?.length && hotel.plotDetails?.dimensions?.breadth
+                            ? `${hotel.plotDetails.dimensions.length} x ${hotel.plotDetails.dimensions.breadth} ft`
+                            : 'Not set'}
+                    </p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Facing</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.facing || 'Not set'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Land Type</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.landType || 'Not set'}</p>
+                </div>
             </div>
-            <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Check Out</h4>
-                <p className="text-sm font-bold text-gray-900">{hotel.checkOutTime || 'Not set'}</p>
+        ) : hotel.propertyType === 'buy' ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Super Built-up Area</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.area?.superBuiltUp || 'Not set'} {hotel.buyDetails?.area?.unit || 'sqft'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Carpet Area</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.area?.carpet || 'Not set'} {hotel.buyDetails?.area?.unit || 'sqft'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Ownership</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.ownership || 'Not set'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Floor</h4>
+                    <p className="text-sm font-bold text-gray-900">
+                        {hotel.buyDetails?.floor?.current && hotel.buyDetails?.floor?.total
+                            ? `${hotel.buyDetails.floor.current} of ${hotel.buyDetails.floor.total}`
+                            : 'Not set'}
+                    </p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Facing</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.facing || 'Not set'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Property Age</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.propertyAge || 'Not set'}</p>
+                </div>
             </div>
-            <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Average Rating</h4>
-                <p className="text-sm font-bold text-gray-900 flex items-center gap-1">
-                    <Star size={14} className="text-yellow-400" />
-                    {hotel.avgRating?.toFixed(1) || '0.0'}
-                    <span className="text-[10px] text-gray-400 font-bold uppercase ml-1">
-                        ({hotel.totalReviews || 0} Reviews)
-                    </span>
-                </p>
+        ) : hotel.propertyType === 'rent' ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Monthly Rent</h4>
+                    <p className="text-sm font-bold text-gray-900">₹{hotel.rentDetails?.monthlyRent?.toLocaleString() || 'Not set'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Maintenance</h4>
+                    <p className="text-sm font-bold text-gray-900">₹{hotel.rentDetails?.maintenanceCharges?.toLocaleString() || '0'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Type</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.rentDetails?.type || 'Not specified'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Furnishing</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.rentDetails?.furnishing || 'Not specified'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Tenant Preference</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.rentDetails?.tenantPreference || 'Any'}</p>
+                </div>
             </div>
-        </div>
+        ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Check In</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.checkInTime || 'Not set'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Check Out</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.checkOutTime || 'Not set'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Average Rating</h4>
+                    <p className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                        <Star size={14} className="text-yellow-400" />
+                        {hotel.avgRating?.toFixed(1) || '0.0'}
+                        <span className="text-[10px] text-gray-400 font-bold uppercase ml-1">
+                            ({hotel.totalReviews || 0} Reviews)
+                        </span>
+                    </p>
+                </div>
+            </div>
+        )}
 
-        <div>
-            <h3 className="font-bold text-[10px] uppercase tracking-wider text-gray-500 mb-3">Amenities</h3>
-            <div className="flex flex-wrap gap-3">
-                {hotel.amenities && hotel.amenities.length > 0 ? (
-                    hotel.amenities.map((amenity, i) => (
-                        <div key={i} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-[10px] font-bold uppercase text-gray-700">
-                            <CheckCircle size={12} className="text-green-500" />
-                            {amenity.replace(/_/g, ' ')}
-                        </div>
-                    ))
-                ) : (
-                    <p className="text-xs text-gray-400 font-bold uppercase">No amenities listed</p>
-                )}
+        {hotel.propertyType !== 'plot' && (
+            <div>
+                <h3 className="font-bold text-[10px] uppercase tracking-wider text-gray-500 mb-3">Amenities</h3>
+                <div className="flex flex-wrap gap-3">
+                    {hotel.amenities && hotel.amenities.length > 0 ? (
+                        hotel.amenities.map((amenity, i) => (
+                            <div key={i} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-[10px] font-bold uppercase text-gray-700">
+                                <CheckCircle size={12} className="text-green-500" />
+                                {amenity.replace(/_/g, ' ')}
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-xs text-gray-400 font-bold uppercase">No amenities listed</p>
+                    )}
+                </div>
             </div>
-        </div>
+        )}
+
+        {hotel.propertyType === 'plot' && (
+            <div>
+                <h3 className="font-bold text-[10px] uppercase tracking-wider text-gray-500 mb-3">Plot Features</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Boundary Marked</h4>
+                        <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.boundaryMarked ? 'Yes' : 'No'}</p>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Electricity Available</h4>
+                        <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.electricityAvailable ? 'Yes' : 'No'}</p>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Water Source</h4>
+                        <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.waterSource || 'Not specified'}</p>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Road Width</h4>
+                        <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.roadWidth ? `${hotel.plotDetails.roadWidth} ft` : 'Not set'}</p>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Approval Authority</h4>
+                        <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.approvalAuthority || 'Not specified'}</p>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Soil Type</h4>
+                        <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.soilType || 'Not specified'}</p>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {hotel.propertyType === 'buy' && (
+            <div>
+                <h3 className="font-bold text-[10px] uppercase tracking-wider text-gray-500 mb-3">Legal & Financial Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Legal Verified</h4>
+                        <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.legalVerified ? 'Yes' : 'No'}</p>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Loan Eligible</h4>
+                        <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.loanEligible ? 'Yes' : 'No'}</p>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Registration Included</h4>
+                        <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.registrationIncluded ? 'Yes' : 'No'}</p>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Stamp Duty Included</h4>
+                        <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.stampDutyIncluded ? 'Yes' : 'No'}</p>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Property Tax</h4>
+                        <p className="text-sm font-bold text-gray-900">₹{hotel.buyDetails?.propertyTax?.toLocaleString() || 'Not specified'}</p>
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Builder Name</h4>
+                        <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.builderName || 'Not specified'}</p>
+                    </div>
+                </div>
+            </div>
+        )}
     </div>
 );
 
@@ -623,8 +788,10 @@ const AdminHotelDetail = () => {
         { id: 'overview', label: 'Overview', icon: Building2 },
         { id: 'gallery', label: 'Full Gallery', icon: ImageIcon },
         { id: 'documents', label: 'KYC Documents', icon: ShieldCheck },
-        { id: 'rooms', label: hotel?.propertyType === 'tent' ? 'Tents & Pricing' : 'Rooms & Pricing', icon: Bed },
-        { id: 'bookings', label: 'Booking History', icon: Calendar },
+        ...(hotel?.propertyType !== 'plot' && hotel?.propertyType !== 'buy' ? [
+            { id: 'rooms', label: hotel?.propertyType === 'tent' ? 'Tents & Pricing' : 'Rooms & Pricing', icon: Bed },
+            { id: 'bookings', label: 'Booking History', icon: Calendar },
+        ] : [])
     ];
 
     return (

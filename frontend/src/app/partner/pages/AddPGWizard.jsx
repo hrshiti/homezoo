@@ -59,7 +59,7 @@ const AddPGWizard = () => {
       if (pgCategoryId) return; // Already have category ID
       try {
         const categories = await categoryService.getActiveCategories();
-        const pgCat = categories.find(c => 
+        const pgCat = categories.find(c =>
           ['hostel', 'pg', 'pg/co-living', 'co-living'].includes((c.displayName || '').toLowerCase()) ||
           ['hostel', 'pg', 'pg/co-living', 'co-living'].includes((c.name || '').toLowerCase())
         );
@@ -95,7 +95,18 @@ const AddPGWizard = () => {
     contactNumber: '',
     cancellationPolicy: 'No refund after check-in',
     houseRules: [],
-    documents: REQUIRED_DOCS_PG.map(d => ({ type: d.type, name: d.name, fileUrl: '' }))
+    documents: REQUIRED_DOCS_PG.map(d => ({ type: d.type, name: d.name, fileUrl: '' })),
+    // New PG Fields
+    minStay: '',
+    noticePeriod: '',
+    securityDeposit: '',
+    availableFrom: '',
+    foodIncluded: false,
+    smoking: false,
+    drinking: false,
+    visitors: false,
+    curfew: '',
+    ageRange: ''
   });
 
   const [roomTypes, setRoomTypes] = useState([]);
@@ -572,8 +583,8 @@ const AddPGWizard = () => {
       return;
     }
     const imageCount = (editingRoomType.images || []).filter(Boolean).length;
-    if (imageCount < 3) {
-      setError('Please upload at least 3 room images');
+    if (imageCount < 1) {
+      setError('Please upload at least 1 room image');
       return;
     }
     const next = [...roomTypes];
@@ -617,13 +628,7 @@ const AddPGWizard = () => {
     setStep(4);
   };
 
-  const nextFromNearbyPlaces = () => {
-    if (propertyForm.nearbyPlaces.length < 1) {
-      setError('Please add at least 1 nearby place');
-      return;
-    }
-    setStep(5);
-  };
+
 
   const nextFromImages = () => {
     setError('');
@@ -635,7 +640,7 @@ const AddPGWizard = () => {
       setError('Please upload at least 4 property images');
       return;
     }
-    setStep(6);
+    setStep(5);
   };
 
   const nextFromRoomTypes = () => {
@@ -649,28 +654,22 @@ const AddPGWizard = () => {
         setError('Room type name and price required');
         return;
       }
-      if (!rt.images || rt.images.filter(Boolean).length < 3) {
-        setError('Each room type must have at least 3 images');
+      if (!rt.images || rt.images.filter(Boolean).length < 1) {
+        setError('Each room type must have at least 1 image');
         return;
       }
     }
-    setStep(7);
+    setStep(6);
   };
 
   const nextFromRules = () => {
     setError('');
-    const checkIn = (propertyForm.checkInTime || '').toString().trim();
-    const checkOut = (propertyForm.checkOutTime || '').toString().trim();
     const policy = (propertyForm.cancellationPolicy || '').toString().trim();
-    if (!checkIn || !checkOut) {
-      setError('Check-in and Check-out times are required.');
-      return;
-    }
     if (!policy) {
       setError('Please select a cancellation policy.');
       return;
     }
-    setStep(8);
+    setStep(7);
   };
 
   const nextFromDocuments = () => {
@@ -678,7 +677,7 @@ const AddPGWizard = () => {
     // Optional: Warn if missing, but proceed.
     // const missing = propertyForm.documents.some(d => !d.fileUrl);
     // if (missing) console.warn('Some documents missing');
-    setStep(9);
+    setStep(8);
   };
 
   const resolveCoordinatesFromAddress = async () => {
@@ -696,7 +695,7 @@ const AddPGWizard = () => {
       if (first?.lat != null && first?.lng != null) {
         return [Number(first.lng), Number(first.lat)];
       }
-    } catch (_) {}
+    } catch (_) { }
     return [77.0, 21.0];
   };
 
@@ -729,8 +728,25 @@ const AddPGWizard = () => {
         checkInTime: propertyForm.checkInTime,
         checkOutTime: propertyForm.checkOutTime,
         cancellationPolicy: propertyForm.cancellationPolicy,
+        cancellationPolicy: propertyForm.cancellationPolicy,
         houseRules: propertyForm.houseRules,
-        documents: propertyForm.documents
+        documents: propertyForm.documents,
+        pgDetails: {
+          occupancy: 'Single', // Default or derived? Maybe add field if needed, but per room is better.
+          gender: propertyForm.pgType === 'boys' ? 'Boys' : propertyForm.pgType === 'girls' ? 'Girls' : 'Co-ed',
+          minStay: propertyForm.minStay,
+          noticePeriod: propertyForm.noticePeriod,
+          securityDeposit: Number(propertyForm.securityDeposit || 0),
+          availableFrom: propertyForm.availableFrom,
+          foodIncluded: propertyForm.foodIncluded,
+          rules: {
+            smoking: propertyForm.smoking,
+            drinking: propertyForm.drinking,
+            visitors: propertyForm.visitors,
+            curfew: propertyForm.curfew,
+            ageRange: propertyForm.ageRange
+          }
+        }
       };
       let propId = createdProperty?._id;
       if (propId) {
@@ -788,7 +804,7 @@ const AddPGWizard = () => {
         setCreatedProperty(res.property);
       }
       localStorage.removeItem(STORAGE_KEY);
-      setStep(10);
+      setStep(9);
     } catch (e) {
       setError(e?.message || 'Failed to submit property');
     } finally {
@@ -796,7 +812,7 @@ const AddPGWizard = () => {
     }
   };
 
-  const isEditingSubItem = editingRoomType !== null || editingNearbyIndex !== null;
+  const isEditingSubItem = editingRoomType !== null;
 
   const handleBack = () => {
     if (step === 1) {
@@ -817,14 +833,12 @@ const AddPGWizard = () => {
     } else if (step === 3) {
       updatePropertyForm('amenities', []);
     } else if (step === 4) {
-      updatePropertyForm('nearbyPlaces', []);
-    } else if (step === 5) {
       setPropertyForm(prev => ({ ...prev, coverImage: '', propertyImages: [] }));
-    } else if (step === 6) {
+    } else if (step === 5) {
       setRoomTypes([]);
-    } else if (step === 7) {
+    } else if (step === 6) {
       setPropertyForm(prev => ({ ...prev, checkInTime: '12:00 PM', checkOutTime: '10:00 AM', cancellationPolicy: 'No refund after check-in', houseRules: [] }));
-    } else if (step === 8) {
+    } else if (step === 7) {
       updatePropertyForm('documents', REQUIRED_DOCS_PG.map(d => ({ type: d.type, name: d.name, fileUrl: '' })));
     }
   };
@@ -833,13 +847,12 @@ const AddPGWizard = () => {
     if (loading) return;
     if (step === 1) nextFromBasic();
     else if (step === 2) nextFromLocation();
-    else if (step === 3) nextFromAmenities();
-    else if (step === 4) nextFromNearbyPlaces();
-    else if (step === 5) nextFromImages();
-    else if (step === 6) nextFromRoomTypes();
-    else if (step === 7) nextFromRules();
-    else if (step === 8) nextFromDocuments();
-    else if (step === 9) submitAll();
+    else if (step === 3) nextFromAmenities(); // Goes to Step 4 (Images)
+    else if (step === 4) nextFromImages();
+    else if (step === 5) nextFromRoomTypes();
+    else if (step === 6) nextFromRules();
+    else if (step === 7) nextFromDocuments();
+    else if (step === 8) submitAll();
   };
 
   const getStepTitle = () => {
@@ -847,12 +860,11 @@ const AddPGWizard = () => {
       case 1: return "Basic Info";
       case 2: return "Location";
       case 3: return "Amenities";
-      case 4: return "Nearby Places";
-      case 5: return "Property Images";
-      case 6: return "Bed Inventory";
-      case 7: return "House Rules";
-      case 8: return "Documents";
-      case 9: return "Review & Submit";
+      case 4: return "Property Images";
+      case 5: return "Bed Inventory";
+      case 6: return "House Rules";
+      case 7: return "Documents";
+      case 8: return "Review & Submit";
       default: return "";
     }
   };
@@ -926,6 +938,36 @@ const AddPGWizard = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Min Stay</label>
+                    <input className="input w-full" placeholder="e.g. 3 Months" value={propertyForm.minStay} onChange={e => updatePropertyForm('minStay', e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Notice Period</label>
+                    <input className="input w-full" placeholder="e.g. 1 Month" value={propertyForm.noticePeriod} onChange={e => updatePropertyForm('noticePeriod', e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Security Deposit (₹)</label>
+                    <input type="number" className="input w-full" placeholder="e.g. 5000" value={propertyForm.securityDeposit} onChange={e => updatePropertyForm('securityDeposit', e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Available From</label>
+                    <input type="date" className="input w-full" value={propertyForm.availableFrom} onChange={e => updatePropertyForm('availableFrom', e.target.value)} />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <label className="flex items-center gap-2 cursor-pointer p-3 border border-gray-200 rounded-xl w-full hover:border-emerald-200 bg-white">
+                    <input type="checkbox" checked={propertyForm.foodIncluded} onChange={e => updatePropertyForm('foodIncluded', e.target.checked)} className="accent-emerald-600 w-5 h-5" />
+                    <div>
+                      <span className="text-sm font-bold text-gray-700 block">Food Included</span>
+                      <span className="text-xs text-gray-400">Breakfast, Lunch, Dinner provided</span>
+                    </div>
+                  </label>
                 </div>
 
                 <div className="space-y-1">
@@ -1082,149 +1124,9 @@ const AddPGWizard = () => {
             </div>
           )}
 
+
+
           {step === 4 && (
-            <div className="space-y-4">
-              {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>}
-
-              {!isEditingSubItem && (
-                <div className="space-y-3">
-                  {propertyForm.nearbyPlaces.map((place, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 border border-gray-200 rounded-xl bg-white hover:border-emerald-200 transition-colors shadow-sm">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                          <MapPin size={18} />
-                        </div>
-                        <div>
-                          <div className="font-bold text-gray-900">{place.name}</div>
-                          <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                            {place.type} • <span className="text-emerald-600">{place.distanceKm} km</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => startEditNearbyPlace(idx)}
-                          className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                        >
-                          <FileText size={18} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteNearbyPlace(idx)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {propertyForm.nearbyPlaces.length === 0 && (
-                    <div className="text-center py-10 px-6 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
-                      <div className="w-12 h-12 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <MapPin size={24} />
-                      </div>
-                      <p className="text-gray-500 font-medium">No nearby places added yet</p>
-                      <p className="text-xs text-gray-400 mt-1">Add tourist spots, transport hubs, etc.</p>
-                    </div>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={startAddNearbyPlace}
-                    disabled={propertyForm.nearbyPlaces.length >= 5}
-                    className="w-full py-4 border border-emerald-200 text-emerald-700 bg-emerald-50/50 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Plus size={20} />
-                    Add Nearby Place
-                  </button>
-                </div>
-              )}
-
-              {isEditingSubItem && (
-                <div className="bg-white rounded-2xl border border-emerald-100 shadow-lg overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
-                  <div className="px-4 py-3 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between">
-                    <span className="font-bold text-emerald-800 text-sm">
-                      {editingNearbyIndex === -1 ? 'Add New Place' : 'Edit Place'}
-                    </span>
-                    <button onClick={cancelEditNearbyPlace} className="text-emerald-600 hover:bg-emerald-100 p-1 rounded-md">
-                      <span className="text-xs font-bold">Close</span>
-                    </button>
-                  </div>
-
-                  <div className="p-4 space-y-4">
-                    <div className="relative">
-                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Search Place</label>
-                      <div className="flex gap-2">
-                        <input
-                          className="input w-full"
-                          placeholder="Type to search..."
-                          value={nearbySearchQuery}
-                          onChange={e => setNearbySearchQuery(e.target.value)}
-                        />
-                        <button
-                          type="button"
-                          onClick={searchNearbyPlaces}
-                          className="px-4 py-2 bg-gray-900 text-white rounded-xl font-semibold text-sm"
-                        >
-                          Search
-                        </button>
-                      </div>
-                      {nearbyResults.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
-                          {nearbyResults.slice(0, 6).map((p, i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              onClick={() => selectNearbyPlace(p)}
-                              className="w-full text-left px-4 py-3 hover:bg-emerald-50 border-b border-gray-50 last:border-0 text-sm"
-                            >
-                              <div className="font-semibold text-gray-900">{p.name}</div>
-                              <div className="text-xs text-gray-500 truncate">{p.address || p.formatted_address}</div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-3 pt-2 border-t border-gray-100">
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold text-gray-500">Name</label>
-                        <input className="input w-full" value={tempNearbyPlace.name} onChange={e => setTempNearbyPlace({ ...tempNearbyPlace, name: e.target.value })} />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <label className="text-xs font-semibold text-gray-500">Type</label>
-                          <select className="input w-full appearance-none" value={tempNearbyPlace.type} onChange={e => setTempNearbyPlace({ ...tempNearbyPlace, type: e.target.value })}>
-                            <option value="tourist">Tourist Attraction</option>
-                            <option value="airport">Airport</option>
-                            <option value="market">Market</option>
-                            <option value="railway">Railway Station</option>
-                            <option value="bus_stop">Bus Stop</option>
-                            <option value="hospital">Hospital</option>
-                            <option value="restaurant">Restaurant</option>
-                            <option value="other">Other</option>
-                          </select>
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-xs font-semibold text-gray-500">Distance (km)</label>
-                          <input className="input w-full" type="number" value={tempNearbyPlace.distanceKm} onChange={e => setTempNearbyPlace({ ...tempNearbyPlace, distanceKm: e.target.value })} />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                      <button type="button" onClick={cancelEditNearbyPlace} className="flex-1 py-3 text-gray-600 font-semibold bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">Cancel</button>
-                      <button type="button" onClick={saveNearbyPlace} className="flex-1 py-3 text-white font-bold bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-md shadow-emerald-200 transition-all transform active:scale-95">Save Place</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {step === 5 && (
             <div className="space-y-6">
               <div className="space-y-3">
                 <div className="flex justify-between items-center px-1">
@@ -1285,7 +1187,7 @@ const AddPGWizard = () => {
             </div>
           )}
 
-          {step === 6 && (
+          {step === 5 && (
             <div className="space-y-6">
               {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>}
 
@@ -1378,7 +1280,7 @@ const AddPGWizard = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1">
-                        <label className="text-xs font-semibold text-gray-500">Price per Night (₹)</label>
+                        <label className="text-xs font-semibold text-gray-500">Monthly Rent (₹)</label>
                         <div className="relative">
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
                           <input className="input pl-7" type="number" placeholder="0" value={editingRoomType.pricePerNight} onChange={e => setEditingRoomType({ ...editingRoomType, pricePerNight: e.target.value })} />
@@ -1400,8 +1302,8 @@ const AddPGWizard = () => {
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-semibold text-gray-500">Images (Max 3)</label>
-                        <span className="text-[10px] text-gray-400">{(editingRoomType.images || []).length}/3</span>
+                        <label className="text-xs font-semibold text-gray-500">Images (Max 5)</label>
+                        <span className="text-[10px] text-gray-400">{(editingRoomType.images || []).length}/5</span>
                       </div>
                       <div className="flex gap-3 overflow-x-auto pb-2">
                         {(editingRoomType.images || []).map((img, i) => (
@@ -1410,13 +1312,14 @@ const AddPGWizard = () => {
                             <button type="button" onClick={() => handleRemoveImage(img, 'room', i)} className="absolute top-1 right-1 w-5 h-5 rounded-full bg-white text-red-500 flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={12} /></button>
                           </div>
                         ))}
-                        {(editingRoomType.images || []).length < 3 && (
-                          <button type="button" onClick={() => isFlutter ? handleCameraUpload('room', url => setEditingRoomType(prev => ({ ...prev, images: [...(prev.images || []), url].slice(0, 3) }))) : roomImagesFileInputRef.current?.click()} disabled={!!uploading} className="w-20 h-20 flex-shrink-0 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50/20 transition-all">
+                        {(editingRoomType.images || []).length < 5 && (
+                          <button type="button" onClick={() => isFlutter ? handleCameraUpload('room', url => setEditingRoomType(prev => ({ ...prev, images: [...(prev.images || []), url].slice(0, 5) }))) : roomImagesFileInputRef.current?.click()} disabled={!!uploading} className="w-20 h-20 flex-shrink-0 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50/20 transition-all">
                             {uploading === 'room' ? <Loader2 size={20} className="animate-spin text-emerald-600" /> : <Plus size={20} />}
                           </button>
                         )}
                         <input ref={roomImagesFileInputRef} type="file" multiple accept="image/*" className="hidden" onChange={e => {
-                          if (e.target.files?.length) uploadImages(e.target.files, 'room', urls => urls.length && setEditingRoomType(prev => ({ ...prev, images: [...(prev.images || []), ...urls].slice(0, 3) })));
+                          if (e.target.files?.length) uploadImages(e.target.files, 'room', urls => urls.length && setEditingRoomType(prev => ({ ...prev, images: [...(prev.images || []), ...urls].slice(0, 5) })));
+                          e.target.value = '';
                         }} />
                       </div>
                     </div>
@@ -1456,7 +1359,7 @@ const AddPGWizard = () => {
             </div>
           )}
 
-          {step === 7 && (
+          {step === 6 && (
             <div className="space-y-6">
               {error && (
                 <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium border border-red-100 flex items-center gap-2">
@@ -1464,23 +1367,6 @@ const AddPGWizard = () => {
                   {error}
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500">Check-In Time</label>
-                  <div className="relative">
-                    <input className="input !pl-12" placeholder="e.g. 12:00 PM" value={propertyForm.checkInTime} onChange={e => updatePropertyForm('checkInTime', e.target.value)} />
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><Clock size={18} /></div>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500">Check-Out Time</label>
-                  <div className="relative">
-                    <input className="input !pl-12" placeholder="e.g. 11:00 AM" value={propertyForm.checkOutTime} onChange={e => updatePropertyForm('checkOutTime', e.target.value)} />
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><Clock size={18} /></div>
-                  </div>
-                </div>
-              </div>
-
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-gray-500">Cancellation Policy</label>
                 <select
@@ -1492,6 +1378,34 @@ const AddPGWizard = () => {
                   <option value="Free cancellation up to 24hrs">Free cancellation up to 24hrs</option>
                   <option value="Strict">Strict</option>
                 </select>
+              </div>
+
+              <div className="space-y-4 pt-4 border-t border-gray-100">
+                <label className="text-sm font-bold text-gray-700">Specific Rules</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer bg-white p-2 border rounded-lg">
+                    <input type="checkbox" checked={propertyForm.smoking} onChange={e => updatePropertyForm('smoking', e.target.checked)} className="accent-emerald-600" />
+                    <span className="text-xs font-medium">Smoking Allowed</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer bg-white p-2 border rounded-lg">
+                    <input type="checkbox" checked={propertyForm.drinking} onChange={e => updatePropertyForm('drinking', e.target.checked)} className="accent-emerald-600" />
+                    <span className="text-xs font-medium">Drinking Allowed</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer bg-white p-2 border rounded-lg">
+                    <input type="checkbox" checked={propertyForm.visitors} onChange={e => updatePropertyForm('visitors', e.target.checked)} className="accent-emerald-600" />
+                    <span className="text-xs font-medium">Visitors Allowed</span>
+                  </label>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-500">Curfew Time</label>
+                    <input className="input w-full" placeholder="e.g. 10:00 PM" value={propertyForm.curfew} onChange={e => updatePropertyForm('curfew', e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-500">Preferred Age Range</label>
+                    <input className="input w-full" placeholder="e.g. 18 - 30" value={propertyForm.ageRange} onChange={e => updatePropertyForm('ageRange', e.target.value)} />
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -1512,7 +1426,7 @@ const AddPGWizard = () => {
             </div>
           )}
 
-          {step === 8 && (
+          {step === 7 && (
             <div className="space-y-6">
               {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>}
               <div className="space-y-4">
@@ -1587,7 +1501,7 @@ const AddPGWizard = () => {
             </div>
           )}
 
-          {step === 9 && (
+          {step === 8 && (
             <div className="space-y-6">
               <div className="bg-emerald-50 rounded-2xl p-6 text-center">
                 <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-emerald-600">
@@ -1637,7 +1551,7 @@ const AddPGWizard = () => {
               {error && <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm text-center font-medium">{error}</div>}
             </div>
           )}
-          {step === 10 && (
+          {step === 9 && (
             <div className="flex flex-col items-center justify-center py-12 text-center space-y-6">
               <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center transition-all animate-bounce">
                 <CheckCircle size={48} />
@@ -1655,7 +1569,7 @@ const AddPGWizard = () => {
             </div>
           )}
         </div>
-      </main>
+      </main >
 
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 z-40">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
@@ -1667,7 +1581,7 @@ const AddPGWizard = () => {
             Back
           </button>
 
-          {step < 9 && (
+          {step < 8 && (
             <button
               onClick={clearCurrentStep}
               disabled={loading}
@@ -1678,11 +1592,11 @@ const AddPGWizard = () => {
           )}
 
           <button
-            onClick={step === 9 ? submitAll : handleNext}
+            onClick={step === 8 ? submitAll : handleNext}
             disabled={
               loading ||
               isEditingSubItem ||
-              (step === 6 && roomTypes.length === 0)
+              (step === 5 && roomTypes.length === 0)
             }
             className="flex-1 px-6 py-3 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-200 transition-all active:scale-95 flex items-center justify-center gap-2"
           >
@@ -1692,14 +1606,14 @@ const AddPGWizard = () => {
                 Processing...
               </>
             ) : (
-              step === 9 ? 'Submit Property' : 'Next Step'
+              step === 8 ? 'Submit Property' : 'Next Step'
             )}
           </button>
         </div>
       </div>
 
 
-    </div>
+    </div >
   );
 };
 
