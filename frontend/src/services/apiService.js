@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-// Base URL configuration
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import axios from 'axios';
+import { API_BASE_URL } from '../config/apiConfig';
 
 export const api = axios.create({
-  baseURL: API_URL,
-  timeout: 60000, // 60 seconds timeout
+  baseURL: API_BASE_URL,
+  timeout: 60000,
 });
 
 // Interceptor to add Token and Log

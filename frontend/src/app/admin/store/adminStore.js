@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { API_BASE_URL } from '../../../config/apiConfig';
 
 const axiosInstance = axios.create({
-  baseURL: API_URL
+  baseURL: API_BASE_URL
 });
 
 axiosInstance.interceptors.request.use((config) => {
@@ -33,7 +33,7 @@ const useAdminStore = create((set, get) => ({
 
   login: async (email, password) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/admin/login`, { email, password });
+      const response = await axios.post(`${API_BASE_URL}/auth/admin/login`, { email, password });
       const { token, user } = response.data;
 
       localStorage.setItem('adminToken', token);
