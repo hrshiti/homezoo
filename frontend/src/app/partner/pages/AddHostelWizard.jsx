@@ -1273,7 +1273,7 @@ const AddHostelWizard = () => {
                                   <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">{rt.roomCategory}</span>
                                   <span>•</span>
                                   <span className="font-semibold text-gray-900">₹{rt.pricePerNight}</span>
-                                  <span className="text-xs">/ night</span>
+                                  <span className="text-xs">/ month</span>
                                 </div>
                                 <div className="flex flex-wrap gap-2 mt-3">
                                   <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded flex items-center gap-1">Beds: {rt.bedsPerRoom}</span>
@@ -1329,7 +1329,7 @@ const AddHostelWizard = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1">
-                        <label className="text-xs font-semibold text-gray-500">Price per Night (₹)</label>
+                        <label className="text-xs font-semibold text-gray-500">Monthly Rent (₹)</label>
                         <div className="relative">
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
                           <input className="input pl-7" type="number" placeholder="0" value={editingRoomType.pricePerNight} onChange={e => setEditingRoomType({ ...editingRoomType, pricePerNight: e.target.value })} />
@@ -1560,7 +1560,7 @@ const AddHostelWizard = () => {
                     {roomTypes.map((rt, i) => (
                       <div key={i} className="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-lg">
                         <span className="text-gray-600">{rt.name}</span>
-                        <span className="font-bold text-emerald-700">₹{rt.pricePerNight}</span>
+                        <span className="font-bold text-emerald-700">₹{rt.pricePerNight} / month</span>
                       </div>
                     ))}
                   </div>

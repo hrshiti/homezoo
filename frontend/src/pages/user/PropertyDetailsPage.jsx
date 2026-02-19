@@ -26,21 +26,26 @@ const PropertyDetailsPage = () => {
 
   // Check Availability Logic
   const checkAvailability = async (directCall = false) => {
-    if (!dates.checkIn || !dates.checkOut || !selectedRoom) {
+    const isPgOrHostel = propertyType?.toLowerCase() === 'pg' || propertyType?.toLowerCase() === 'hostel';
+    if (!selectedRoom || (!isPgOrHostel && (!dates.checkIn || !dates.checkOut))) {
       if (directCall) {
-        toast.error("Please select dates and room first");
+        toast.error(selectedRoom ? "Please select dates first" : "Please select a room/unit first");
       }
       setAvailability(null);
       return null;
     }
+
+    const pgDates = getDefaultPgDates();
+    const checkIn = (isPgOrHostel && !dates.checkIn) ? pgDates.checkIn : dates.checkIn;
+    const checkOut = (isPgOrHostel && !dates.checkOut) ? pgDates.checkOut : dates.checkOut;
 
     setCheckingAvailability(true);
     try {
       const response = await availabilityService.check({
         propertyId: id,
         roomTypeId: selectedRoom._id,
-        checkIn: dates.checkIn,
-        checkOut: dates.checkOut,
+        checkIn: checkIn,
+        checkOut: checkOut,
         rooms: guests.rooms
       });
 
@@ -193,7 +198,7 @@ const PropertyDetailsPage = () => {
 
   // Helper derived state for hooks (safe access)
   const propertyType = property?.propertyType;
-  const isBedBased = ['Hostel', 'PG'].includes(propertyType);
+  const isBedBased = ['hostel', 'pg'].includes(propertyType?.toLowerCase());
 
   // Update guests when rooms change to ensure valid state
   useEffect(() => {
@@ -201,6 +206,12 @@ const PropertyDetailsPage = () => {
       setGuests(prev => ({ ...prev, adults: prev.rooms, children: 0 }));
     }
   }, [guests.rooms, isBedBased]);
+
+  const getDefaultPgDates = () => {
+    const start = new Date().toISOString().split('T')[0];
+    const end = new Date(new Date().getTime() + 2592000000).toISOString().split('T')[0]; // 30 days
+    return { checkIn: start, checkOut: end };
+  };
 
   useEffect(() => {
     if (id) {
@@ -316,7 +327,7 @@ const PropertyDetailsPage = () => {
   const {
     _id, name, address, images, description, avgRating: rating,
     inventory, amenities, policies, config,
-    pgDetails, rentDetails, buyDetails, plotDetails,
+    pgDetails, rentDetails, buyDetails, plotDetails, nearbyPlaces,
     videoUrl, virtualTourLink, isVerified, isFeatured, isUrgent, isNegotiable,
     contactNumber
   } = property;
@@ -377,11 +388,16 @@ const PropertyDetailsPage = () => {
   const getExtraPricingLabels = (room) => {
     if (!room || !room.pricing) return [];
     const labels = [];
+    const pType = property?.propertyType?.toLowerCase();
+    const isMonthBased = ['pg', 'hostel', 'rent'].includes(pType);
+    const isSaleBased = ['buy', 'plot'].includes(pType);
+    const suffix = isMonthBased ? 'month' : isSaleBased ? '' : 'night';
+
     if (typeof room.pricing.extraAdultPrice === 'number') {
-      labels.push(`Extra adult: ₹${room.pricing.extraAdultPrice} / night`);
+      labels.push(`Extra adult: ₹${room.pricing.extraAdultPrice}${suffix ? ` / ${suffix}` : ''}`);
     }
     if (typeof room.pricing.extraChildPrice === 'number') {
-      labels.push(`Extra child: ₹${room.pricing.extraChildPrice} / night`);
+      labels.push(`Extra child: ₹${room.pricing.extraChildPrice}${suffix ? ` / ${suffix}` : ''}`);
     }
     return labels;
   };
@@ -417,6 +433,7 @@ const PropertyDetailsPage = () => {
   const getUnitLabel = () => {
     if (propertyType === 'Tent') return 'Tents';
     if (propertyType === 'Homestay' || propertyType === 'Villa') return 'Units';
+    if (['PG', 'Hostel'].includes(propertyType)) return 'Beds';
     return 'Rooms';
   };
 
@@ -440,10 +457,21 @@ const PropertyDetailsPage = () => {
   const bookingRoom = selectedRoom || activeRoom;
   const extraPricingLabels = getExtraPricingLabels(bookingRoom);
   const getPriceBreakdown = () => {
-    if (!selectedRoom || !dates.checkIn || !dates.checkOut) return null;
+    const isPg = propertyType?.toLowerCase() === 'pg';
+    const isHostel = propertyType?.toLowerCase() === 'hostel';
+    const isPgOrHostel = isPg || isHostel;
+    if (!selectedRoom || (!isPgOrHostel && (!dates.checkIn || !dates.checkOut))) return null;
 
-    const { nights, perNight } = stayPricing;
-    if (nights === 0) return null;
+    let { nights: stayNights, perNight } = stayPricing;
+
+    // For PGs/Hostels, if dates aren't selected, we assume 1 month (1 unit of pricing)
+    const nights = isPgOrHostel ? 1 : stayNights;
+    if (nights === 0 && !isPgOrHostel) return null;
+
+    // Ensure perNight is valid even if dates are missing for PG/Hostel
+    if (isPgOrHostel && !dates.checkIn) {
+      perNight = getRoomPrice(selectedRoom);
+    }
 
     const units = isWholeUnit ? 1 : guests.rooms;
 
@@ -532,12 +560,12 @@ const PropertyDetailsPage = () => {
       : getRoomPrice(bookingRoom) || property.minPrice;
 
   if (!bookingBarPrice) {
-    if (rentDetails?.monthlyRent) bookingBarPrice = rentDetails.monthlyRent;
-    else if (buyDetails?.expectedPrice) bookingBarPrice = buyDetails.expectedPrice;
-    else if (plotDetails?.expectedPrice) bookingBarPrice = plotDetails.expectedPrice;
+    if (propertyType === 'Rent' && rentDetails?.monthlyRent) bookingBarPrice = rentDetails.monthlyRent;
+    else if (propertyType === 'Buy' && buyDetails?.expectedPrice) bookingBarPrice = buyDetails.expectedPrice;
+    else if (propertyType === 'Plot' && plotDetails?.expectedPrice) bookingBarPrice = plotDetails.expectedPrice;
   }
 
-  const priceLabel = rentDetails ? 'Monthly Rent' : (buyDetails || plotDetails) ? 'Asking Price' : 'Price per night';
+  const priceLabel = (propertyType?.toLowerCase() === 'rent' || propertyType?.toLowerCase() === 'pg' || propertyType?.toLowerCase() === 'hostel') ? 'Monthly Rent' : (propertyType?.toLowerCase() === 'buy' || propertyType?.toLowerCase() === 'plot') ? 'Asking Price' : 'Price per night';
 
   const priceBreakdown = getPriceBreakdown();
 
@@ -552,7 +580,8 @@ const PropertyDetailsPage = () => {
   };
 
   const handleBook = async () => {
-    if (!dates.checkIn || !dates.checkOut) {
+    const isPgOrHostel = propertyType?.toLowerCase() === 'pg' || propertyType?.toLowerCase() === 'hostel';
+    if (!isPgOrHostel && (!dates.checkIn || !dates.checkOut)) {
       toast.error("Please select check-in and check-out dates");
       return;
     }
@@ -571,7 +600,7 @@ const PropertyDetailsPage = () => {
     }
 
     if (!currentAvailability || currentAvailability.available !== true) {
-      toast.error(currentAvailability?.message || "Selected room is not available for these dates");
+      toast.error(currentAvailability?.message || (isPgOrHostel ? "Selected room/bed is not available" : "Selected room is not available for these dates"));
       return;
     }
 
@@ -590,7 +619,7 @@ const PropertyDetailsPage = () => {
       state: {
         property,
         selectedRoom,
-        dates,
+        dates: (propertyType?.toLowerCase() === 'pg' || propertyType?.toLowerCase() === 'hostel') ? getDefaultPgDates() : dates,
         guests: {
           ...guests,
           rooms: guests.rooms
@@ -702,7 +731,13 @@ const PropertyDetailsPage = () => {
               <h1 className="text-xl md:text-3xl font-bold text-textDark mb-1 leading-tight">{name}</h1>
               <div className="flex items-start gap-1.5 text-gray-500 text-xs md:text-sm">
                 <MapPin size={14} className="mt-0.5 shrink-0" />
-                <span className="line-clamp-3 md:line-clamp-1">{address?.fullAddress}</span>
+                <span className="line-clamp-3 md:line-clamp-1">
+                  {address?.fullAddress}
+                  {address?.city ? `, ${address.city}` : ''}
+                  {address?.district ? `, ${address.district}` : ''}
+                  {address?.state ? `, ${address.state}` : ''}
+                  {address?.pincode ? ` - ${address.pincode}` : ''}
+                </span>
               </div>
             </div>
             <div className="hidden md:block text-right">
@@ -718,9 +753,13 @@ const PropertyDetailsPage = () => {
 
           <hr className="border-gray-100 mb-6" />
 
-          {/* Description */}
           <div className="mb-8">
             <h2 className="text-lg font-bold text-textDark mb-3">About this place</h2>
+            {property.shortDescription && (
+              <p className="text-gray-500 font-bold italic text-sm mb-3">
+                {property.shortDescription}
+              </p>
+            )}
             <p className="text-gray-600 leading-relaxed text-sm md:text-base mb-4">
               {description || "No description available."}
             </p>
@@ -774,6 +813,8 @@ const PropertyDetailsPage = () => {
             <div className="mb-8 p-4 bg-yellow-50 rounded-xl border border-yellow-100">
               <h3 className="font-bold text-yellow-900 mb-3">PG / Co-Living Details</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-yellow-900">
+                {pgDetails?.occupancy && <div><span className="opacity-70 text-xs block">Occupancy</span>{pgDetails.occupancy}</div>}
+                {pgDetails?.gender && <div><span className="opacity-70 text-xs block">Gender</span>{pgDetails.gender}</div>}
                 {pgDetails?.minStay && <div><span className="opacity-70 text-xs block">Min Stay</span>{pgDetails.minStay}</div>}
                 {pgDetails?.noticePeriod && <div><span className="opacity-70 text-xs block">Notice Period</span>{pgDetails.noticePeriod}</div>}
                 {pgDetails?.securityDeposit && <div><span className="opacity-70 text-xs block">Security Deposit</span>₹{pgDetails.securityDeposit}</div>}
@@ -802,7 +843,7 @@ const PropertyDetailsPage = () => {
           )}
 
           {/* Rent Details */}
-          {(propertyType === 'Rent' || rentDetails) && rentDetails && (
+          {propertyType === 'Rent' && rentDetails && (
             <div className="mb-8 p-4 bg-blue-50 rounded-xl border border-blue-100">
               <h3 className="font-bold text-blue-900 mb-3">Rental Details</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-blue-900">
@@ -811,28 +852,42 @@ const PropertyDetailsPage = () => {
                 <div><span className="opacity-70 text-xs block">Type</span>{rentDetails.type || 'Not specified'}</div>
                 <div><span className="opacity-70 text-xs block">Furnishing</span>{rentDetails.furnishing || 'Not specified'}</div>
                 <div><span className="opacity-70 text-xs block">Tenant Preference</span>{rentDetails.tenantPreference || 'Any'}</div>
+                {rentDetails.societyName && <div><span className="opacity-70 text-xs block">Society</span>{rentDetails.societyName}</div>}
+                <div><span className="opacity-70 text-xs block">Water Supply</span>{rentDetails.waterSupply || 'Not specified'}</div>
+                <div className="col-span-full flex gap-2 mt-1">
+                  {rentDetails.electricityIncluded && <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-bold uppercase">Electricity Incl.</span>}
+                  {rentDetails.lift && <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-bold uppercase">Lift Available</span>}
+                </div>
               </div>
             </div>
           )}
 
           {/* Buy Details */}
-          {(propertyType === 'Buy' || buyDetails) && buyDetails && (
+          {propertyType === 'Buy' && buyDetails && (
             <div className="mb-8 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
               <h3 className="font-bold text-emerald-900 mb-3">Property Details</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-emerald-900">
                 <div><span className="opacity-70 text-xs block">Type</span>{buyDetails.type}</div>
-                <div><span className="opacity-70 text-xs block">Area</span>{buyDetails.area?.superBuiltUp} {buyDetails.area?.unit}</div>
+                <div><span className="opacity-70 text-xs block">Super Built-up Area</span>{buyDetails.area?.superBuiltUp} {buyDetails.area?.unit || 'sqft'}</div>
+                {buyDetails.area?.carpet && <div><span className="opacity-70 text-xs block">Carpet Area</span>{buyDetails.area?.carpet} {buyDetails.area?.unit || 'sqft'}</div>}
                 <div><span className="opacity-70 text-xs block">Ownership</span>{buyDetails.ownership}</div>
                 <div><span className="opacity-70 text-xs block">Floor</span>{buyDetails.floor?.current} / {buyDetails.floor?.total}</div>
                 <div><span className="opacity-70 text-xs block">Facing</span>{buyDetails.facing}</div>
                 <div><span className="opacity-70 text-xs block">Age</span>{buyDetails.propertyAge}</div>
-                {buyDetails.loanEligible && <div className="col-span-full flex gap-2 mt-1"><span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-bold">Loan Eligible</span></div>}
+                {buyDetails.builderName && <div className="col-span-1"><span className="opacity-70 text-xs block">Builder</span>{buyDetails.builderName}</div>}
+                {buyDetails.propertyTax && <div><span className="opacity-70 text-xs block">Property Tax</span>₹{buyDetails.propertyTax.toLocaleString()}</div>}
+                <div className="col-span-full flex flex-wrap gap-2 mt-2">
+                  {buyDetails.loanEligible && <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold uppercase">Loan Eligible</span>}
+                  {buyDetails.legalVerified && <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold uppercase">Legal Verified</span>}
+                  {buyDetails.registrationIncluded && <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold uppercase">Registration Incl.</span>}
+                  {buyDetails.stampDutyIncluded && <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold uppercase">Stamp Duty Incl.</span>}
+                </div>
               </div>
             </div>
           )}
 
           {/* Plot Details */}
-          {(propertyType === 'Plot' || plotDetails) && plotDetails && (
+          {propertyType === 'Plot' && plotDetails && (
             <div className="mb-8 p-4 bg-green-50 rounded-xl border border-green-100">
               <h3 className="font-bold text-green-900 mb-3">Plot Details</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-green-900">
@@ -840,11 +895,27 @@ const PropertyDetailsPage = () => {
                 <div><span className="opacity-70 text-xs block">Dimensions</span>{plotDetails.dimensions?.length} x {plotDetails.dimensions?.breadth}</div>
                 <div><span className="opacity-70 text-xs block">Facing</span>{plotDetails.facing}</div>
                 <div><span className="opacity-70 text-xs block">Land Type</span>{plotDetails.landType}</div>
-                <div><span className="opacity-70 text-xs block">Road Width</span>{plotDetails.roadWidth}</div>
-                <div><span className="opacity-70 text-xs block">Authority</span>{plotDetails.approvalAuthority}</div>
+                <div><span className="opacity-70 text-xs block">Road Width</span>{plotDetails.roadWidth ? `${plotDetails.roadWidth} ft` : 'N/A'}</div>
+                <div><span className="opacity-70 text-xs block">Authority</span>{plotDetails.approvalAuthority || 'N/A'}</div>
+                <div><span className="opacity-70 text-xs block">Soil Type</span>{plotDetails.soilType || 'N/A'}</div>
+                {plotDetails.nearbyLandmark && <div className="col-span-1"><span className="opacity-70 text-xs block">Landmark</span>{plotDetails.nearbyLandmark}</div>}
+                <div className="col-span-full flex flex-wrap gap-2 mt-2">
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${plotDetails.boundaryMarked ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    Boundary: {plotDetails.boundaryMarked ? 'Yes' : 'No'}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${plotDetails.electricityAvailable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    Electricity: {plotDetails.electricityAvailable ? 'Yes' : 'No'}
+                  </span>
+                  {plotDetails.waterSource && (
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-bold uppercase">
+                      Water: {plotDetails.waterSource}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           )}
+
 
           {propertyType === 'Hotel' && config && (config.hotelCategory || config.starRating) && (
             <div className="mb-8 grid md:grid-cols-2 gap-4">
@@ -880,13 +951,18 @@ const PropertyDetailsPage = () => {
               {/* Price Details Card */}
               {selectedRoom && (
                 <div className="p-4 bg-white rounded-xl border border-gray-200">
-                  <h3 className="text-gray-500 text-sm mb-1">Price per night</h3>
-                  <div className="text-2xl font-bold text-surface mb-2">
-                    ₹{(getRoomPrice(selectedRoom) || 0).toLocaleString()}
+                  <h3 className="text-gray-500 text-sm mb-1">
+                    {(propertyType?.toLowerCase() === 'pg' || propertyType?.toLowerCase() === 'hostel') ? 'Monthly Rent' : 'Price per night'}
+                  </h3>
+                  <div className="text-2xl font-black text-gray-900 mb-1 flex items-baseline gap-1">
+                    ₹{(selectedRoom.pricing?.basePrice || selectedRoom.price || 0).toLocaleString()}
+                    <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">
+                      / {(propertyType?.toLowerCase() === 'pg' || propertyType?.toLowerCase() === 'hostel') ? 'month' : 'night'}
+                    </span>
                   </div>
-                  <div className="text-sm text-gray-500">
-                    <div>Extra adult: ₹{selectedRoom.pricing?.extraAdultPrice || selectedRoom.extraAdultPrice || 0} / night •</div>
-                    <div>Extra child: ₹{selectedRoom.pricing?.extraChildPrice || selectedRoom.extraChildPrice || 0} / night</div>
+                  <div className="flex flex-wrap gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+                    <div>Extra adult: ₹{selectedRoom.pricing?.extraAdultPrice || selectedRoom.extraAdultPrice || 0} / {(propertyType?.toLowerCase() === 'pg' || propertyType?.toLowerCase() === 'hostel') ? 'month' : 'night'} •</div>
+                    <div>Extra child: ₹{selectedRoom.pricing?.extraChildPrice || selectedRoom.extraChildPrice || 0} / {(propertyType?.toLowerCase() === 'pg' || propertyType?.toLowerCase() === 'hostel') ? 'month' : 'night'}</div>
                   </div>
                 </div>
               )}
@@ -1021,206 +1097,250 @@ const PropertyDetailsPage = () => {
             </div>
           )}
 
-          {/* Booking Inputs (Date & Guest) */}
-          <div className="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
-            <h3 className="font-bold text-textDark mb-3">Trip Details</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="col-span-1">
-                <ModernDatePicker
-                  label="Check-in"
-                  date={dates.checkIn}
-                  onChange={(newDate) => setDates({ ...dates, checkIn: newDate })}
-                  minDate={new Date().toISOString().split('T')[0]}
-                  placeholder="Select Check-in"
-                />
-              </div>
-              <div className="col-span-1">
-                <ModernDatePicker
-                  label="Check-out"
-                  date={dates.checkOut}
-                  onChange={(newDate) => setDates({ ...dates, checkOut: newDate })}
-                  minDate={dates.checkIn ? new Date(new Date(dates.checkIn).getTime() + 86400000).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
-                  placeholder="Select Check-out"
-                  align="right"
-                />
-              </div>
-
-              {/* Dynamic Guest/Room Inputs */}
-              {!isWholeUnit && (
-                <div className="col-span-1">
-                  <label className="text-xs text-gray-500 block mb-1">{getUnitLabel()}</label>
-                  <input
-                    type="number"
-                    min="1"
-                    className="w-full bg-white border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-surface"
-                    value={guests.rooms}
-                    onChange={e => setGuests({ ...guests, rooms: e.target.value === '' ? '' : parseInt(e.target.value) })}
-                    onBlur={() => setGuests(prev => ({ ...prev, rooms: Math.max(1, Number(prev.rooms) || 1) }))}
-                  />
+          {['Rent', 'Buy', 'Plot'].includes(propertyType) ? (
+            <div className="mb-8 p-6 bg-emerald-50 rounded-2xl border border-emerald-100 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-inner">
+                  <Phone size={24} />
                 </div>
-              )}
-
-              <div className="col-span-1">
-                <label className="text-xs text-gray-500 block mb-1">Adults</label>
-                <input
-                  type="number"
-                  min="1"
-                  className="w-full bg-white border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-surface"
-                  value={guests.adults}
-                  onChange={e => setGuests({ ...guests, adults: e.target.value === '' ? '' : parseInt(e.target.value) })}
-                  onBlur={() => setGuests(prev => ({ ...prev, adults: Math.max(1, Number(prev.adults) || 1) }))}
-                  disabled={isBedBased}
-                />
-              </div>
-
-              {!isBedBased && (
-                <div className="col-span-1">
-                  <label className="text-xs text-gray-500 block mb-1">Children</label>
-                  <input
-                    type="number"
-                    min="0"
-                    className="w-full bg-white border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-surface"
-                    value={guests.children}
-                    onChange={e => setGuests({ ...guests, children: e.target.value === '' ? '' : parseInt(e.target.value) })}
-                    onBlur={() => setGuests(prev => ({ ...prev, children: Math.max(0, Number(prev.children) || 0) }))}
-                  />
+                <div>
+                  <h3 className="text-xl font-bold text-emerald-900">Interested in this property?</h3>
+                  <p className="text-sm text-emerald-700 font-medium">Contact the owner directly for more details and visits.</p>
                 </div>
-              )}
+              </div>
+              <div className="flex flex-col gap-2 w-full md:w-auto">
+                <a
+                  href={`tel:${contactNumber}`}
+                  className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-black text-center shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <Phone size={18} /> Call Now: {contactNumber}
+                </a>
+                <p className="text-[10px] text-emerald-600 font-bold uppercase text-center mt-1 tracking-widest">
+                  Verified Inquiries Only
+                </p>
+              </div>
             </div>
+          ) : (
+            <>
+              {/* Booking Inputs (Date & Guest) */}
+              <div className="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <h3 className="font-bold text-textDark mb-3">
+                  {(propertyType?.toLowerCase() === 'pg' || propertyType?.toLowerCase() === 'hostel') ? 'Stay Details' : 'Trip Details'}
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {propertyType?.toLowerCase() !== 'pg' && propertyType?.toLowerCase() !== 'hostel' && (
+                    <>
+                      <div className="col-span-1">
+                        <ModernDatePicker
+                          label="Check-in"
+                          date={dates.checkIn}
+                          onChange={(newDate) => setDates({ ...dates, checkIn: newDate })}
+                          minDate={new Date().toISOString().split('T')[0]}
+                          placeholder="Select Check-in"
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <ModernDatePicker
+                          label="Check-out"
+                          date={dates.checkOut}
+                          onChange={(newDate) => setDates({ ...dates, checkOut: newDate })}
+                          minDate={dates.checkIn ? new Date(new Date(dates.checkIn).getTime() + 86400000).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+                          placeholder="Select Check-out"
+                          align="right"
+                        />
+                      </div>
+                    </>
+                  )}
 
+                  {/* Dynamic Guest/Room Inputs */}
+                  {!isWholeUnit && (
+                    <div className="col-span-1">
+                      <label className="text-xs text-gray-500 block mb-1">{getUnitLabel()}</label>
+                      <input
+                        type="number"
+                        min="1"
+                        className="w-full bg-white border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-surface"
+                        value={guests.rooms}
+                        onChange={e => setGuests({ ...guests, rooms: e.target.value === '' ? '' : parseInt(e.target.value) })}
+                        onBlur={() => setGuests(prev => ({ ...prev, rooms: Math.max(1, Number(prev.rooms) || 1) }))}
+                      />
+                    </div>
+                  )}
 
-            {/* --- OFFERS SECTION --- */}
-            {offers.length > 0 && (
-              <div className="mt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2">
-                    <Gift size={16} className="text-surface" />
-                    Offers & Coupons
-                  </h4>
-                  <button
-                    onClick={() => setShowOffersModal(true)}
-                    className="text-xs font-bold text-surface hover:underline"
-                  >
-                    View All
-                  </button>
+                  <div className="col-span-1">
+                    <label className="text-xs text-gray-500 block mb-1">
+                      {(propertyType?.toLowerCase() === 'pg' || propertyType?.toLowerCase() === 'hostel') ? 'Guests' : 'Adults'}
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-full bg-white border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-surface"
+                      value={guests.adults}
+                      onChange={e => setGuests({ ...guests, adults: e.target.value === '' ? '' : parseInt(e.target.value) })}
+                      onBlur={() => setGuests(prev => ({ ...prev, adults: Math.max(1, Number(prev.adults) || 1) }))}
+                      disabled={isBedBased}
+                    />
+                  </div>
+
+                  {!isBedBased && (
+                    <div className="col-span-1">
+                      <label className="text-xs text-gray-500 block mb-1">Children</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="w-full bg-white border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-surface"
+                        value={guests.children}
+                        onChange={e => setGuests({ ...guests, children: e.target.value === '' ? '' : parseInt(e.target.value) })}
+                        onBlur={() => setGuests(prev => ({ ...prev, children: Math.max(0, Number(prev.children) || 0) }))}
+                      />
+                    </div>
+                  )}
                 </div>
 
-                {/* Applied Offer State */}
-                {appliedOffer ? (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-between relative overflow-hidden">
-                    <div className="flex items-center gap-3 relative z-10">
-                      <div className="p-1.5 bg-green-100 rounded-lg text-green-700">
-                        <Tag size={16} />
-                      </div>
-                      <div>
-                        <p className="font-bold text-green-800 text-sm">{appliedOffer.code}</p>
-                        <p className="text-xs text-green-600">
-                          {appliedOffer.discountType === 'percentage'
-                            ? `${appliedOffer.discountValue}% Off applied`
-                            : `₹${appliedOffer.discountValue} Off applied`}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleRemoveOffer}
-                      className="p-1.5 hover:bg-white/50 rounded-full text-green-700 transition-colors z-10"
-                    >
-                      <X size={16} />
-                    </button>
-                    <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-green-100 rounded-full opacity-50" />
-                  </div>
-                ) : (
-                  /* Carousel of Top 3 Offers */
-                  <div className="flex overflow-x-auto gap-3 pb-2 hide-scrollbar snap-x">
-                    {offers.slice(0, 3).map((offer) => (
-                      <div
-                        key={offer._id}
-                        onClick={() => handleApplyOffer(offer)}
-                        className="min-w-[200px] bg-white border border-gray-200 rounded-lg p-3 cursor-pointer hover:border-surface transition-all snap-center relative overflow-hidden group"
+
+                {/* --- OFFERS SECTION --- */}
+                {offers.length > 0 && (
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-bold text-gray-800 text-sm flex items-center gap-2">
+                        <Gift size={16} className="text-surface" />
+                        Offers & Coupons
+                      </h4>
+                      <button
+                        onClick={() => setShowOffersModal(true)}
+                        className="text-xs font-bold text-surface hover:underline"
                       >
-                        <div className={`absolute top-0 right-0 px-2 py-0.5 text-[9px] font-bold text-white rounded-bl-lg ${offer.bg || 'bg-black'}`}>
-                          {offer.code}
+                        View All
+                      </button>
+                    </div>
+
+                    {/* Applied Offer State */}
+                    {appliedOffer ? (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-between relative overflow-hidden">
+                        <div className="flex items-center gap-3 relative z-10">
+                          <div className="p-1.5 bg-green-100 rounded-lg text-green-700">
+                            <Tag size={16} />
+                          </div>
+                          <div>
+                            <p className="font-bold text-green-800 text-sm">{appliedOffer.code}</p>
+                            <p className="text-xs text-green-600">
+                              {appliedOffer.discountType === 'percentage'
+                                ? `${appliedOffer.discountValue}% Off applied`
+                                : `₹${appliedOffer.discountValue} Off applied`}
+                            </p>
+                          </div>
                         </div>
-                        <p className="font-bold text-xs text-gray-800 mt-2">{offer.title}</p>
-                        <p className="text-[10px] text-gray-500 line-clamp-1">{offer.subtitle}</p>
+                        <button
+                          onClick={handleRemoveOffer}
+                          className="p-1.5 hover:bg-white/50 rounded-full text-green-700 transition-colors z-10"
+                        >
+                          <X size={16} />
+                        </button>
+                        <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-green-100 rounded-full opacity-50" />
                       </div>
-                    ))}
+                    ) : (
+                      /* Carousel of Top 3 Offers */
+                      <div className="flex overflow-x-auto gap-3 pb-2 hide-scrollbar snap-x">
+                        {offers.slice(0, 3).map((offer) => (
+                          <div
+                            key={offer._id}
+                            onClick={() => handleApplyOffer(offer)}
+                            className="min-w-[200px] bg-white border border-gray-200 rounded-lg p-3 cursor-pointer hover:border-surface transition-all snap-center relative overflow-hidden group"
+                          >
+                            <div className={`absolute top-0 right-0 px-2 py-0.5 text-[9px] font-bold text-white rounded-bl-lg ${offer.bg || 'bg-black'}`}>
+                              {offer.code}
+                            </div>
+                            <p className="font-bold text-xs text-gray-800 mt-2">{offer.title}</p>
+                            <p className="text-[10px] text-gray-500 line-clamp-1">{offer.subtitle}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
-            )}
 
 
-            {/* Price Breakdown Display */}
-            {priceBreakdown && (
-              <div className="mt-4 p-4 bg-white rounded-lg border border-dashed border-gray-300">
-                <h4 className="font-bold text-gray-800 text-sm mb-3">Price Breakdown</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Base Price ({priceBreakdown.nights} nights x {priceBreakdown.units} units)</span>
-                    <span className="font-medium">₹{priceBreakdown.totalBasePrice.toLocaleString()}</span>
+                {/* Price Breakdown Display */}
+                {priceBreakdown && (
+                  <div className="mt-4 p-4 bg-white rounded-lg border border-dashed border-gray-300">
+                    <h4 className="font-bold text-gray-800 text-sm mb-3">Price Breakdown</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">
+                          {(propertyType?.toLowerCase() === 'pg' || propertyType?.toLowerCase() === 'hostel') ? 'Monthly Rent' : `Base Price (${priceBreakdown.nights} nights x ${priceBreakdown.units} units)`}
+                        </span>
+                        <span className="font-medium">₹{priceBreakdown.totalBasePrice.toLocaleString()}</span>
+                      </div>
+
+                      {priceBreakdown.discountAmount > 0 && (
+                        <div className="flex justify-between text-green-600 font-medium">
+                          <span className="flex items-center gap-1"><Tag size={12} /> Coupon Discount ({appliedOffer?.code})</span>
+                          <span>- ₹{priceBreakdown.discountAmount.toLocaleString()}</span>
+                        </div>
+                      )}
+                      {priceBreakdown.totalExtraAdultCharge > 0 && (
+                        <div className="flex justify-between text-orange-700">
+                          <span>Extra Adults ({priceBreakdown.extraAdultsCount} x ₹{priceBreakdown.extraAdultPrice}/{(propertyType?.toLowerCase() === 'pg' || propertyType?.toLowerCase() === 'hostel') ? 'month' : 'night'})</span>
+                          <span>+ ₹{priceBreakdown.totalExtraAdultCharge.toLocaleString()}</span>
+                        </div>
+                      )}
+                      {priceBreakdown.totalExtraChildCharge > 0 && (
+                        <div className="flex justify-between text-orange-700">
+                          <span>Extra Children ({priceBreakdown.extraChildrenCount} x ₹{priceBreakdown.extraChildPrice}/{(propertyType?.toLowerCase() === 'pg' || propertyType?.toLowerCase() === 'hostel') ? 'month' : 'night'})</span>
+                          <span>+ ₹{priceBreakdown.totalExtraChildCharge.toLocaleString()}</span>
+                        </div>
+                      )}
+                      {priceBreakdown.taxAmount > 0 && (
+                        <div className="flex justify-between text-gray-600">
+                          <span>Taxes & Fees ({taxRate}%)</span>
+                          <span>+ ₹{priceBreakdown.taxAmount.toLocaleString()}</span>
+                        </div>
+                      )}
+                      <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between font-bold text-base text-surface">
+                        <span>Total Amount</span>
+                        <span>₹{priceBreakdown.grandTotal.toLocaleString()}</span>
+                      </div>
+                    </div>
                   </div>
+                )}
 
-                  {priceBreakdown.discountAmount > 0 && (
-                    <div className="flex justify-between text-green-600 font-medium">
-                      <span className="flex items-center gap-1"><Tag size={12} /> Coupon Discount ({appliedOffer?.code})</span>
-                      <span>- ₹{priceBreakdown.discountAmount.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {priceBreakdown.totalExtraAdultCharge > 0 && (
-                    <div className="flex justify-between text-orange-700">
-                      <span>Extra Adults ({priceBreakdown.extraAdultsCount} x ₹{priceBreakdown.extraAdultPrice}/night)</span>
-                      <span>+ ₹{priceBreakdown.totalExtraAdultCharge.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {priceBreakdown.totalExtraChildCharge > 0 && (
-                    <div className="flex justify-between text-orange-700">
-                      <span>Extra Children ({priceBreakdown.extraChildrenCount} x ₹{priceBreakdown.extraChildPrice}/night)</span>
-                      <span>+ ₹{priceBreakdown.totalExtraChildCharge.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {priceBreakdown.taxAmount > 0 && (
-                    <div className="flex justify-between text-gray-600">
-                      <span>Taxes & Fees ({taxRate}%)</span>
-                      <span>+ ₹{priceBreakdown.taxAmount.toLocaleString()}</span>
-                    </div>
-                  )}
-                  <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between font-bold text-base text-surface">
-                    <span>Total Amount</span>
-                    <span>₹{priceBreakdown.grandTotal.toLocaleString()}</span>
-                  </div>
+                {/* Note about limits */}
+                <div className="mt-3 bg-blue-50 text-blue-800 text-xs p-3 rounded-lg flex items-start gap-2">
+                  <Info size={14} className="mt-0.5 shrink-0" />
+                  <p>
+                    Max allowed: <strong>{getMaxAdults()} {(propertyType?.toLowerCase() === 'pg' || propertyType?.toLowerCase() === 'hostel') ? 'Guests' : 'Adults'}</strong>
+                    {!(propertyType?.toLowerCase() === 'pg' || propertyType?.toLowerCase() === 'hostel') && (
+                      <> and <strong>{getMaxChildren()} Children</strong></>
+                    )} for current selection.
+                  </p>
                 </div>
               </div>
-            )}
-
-            {/* Note about limits */}
-            <div className="mt-3 bg-blue-50 text-blue-800 text-xs p-3 rounded-lg flex items-start gap-2">
-              <Info size={14} className="mt-0.5 shrink-0" />
-              <p>
-                Max allowed: <strong>{getMaxAdults()} Adults</strong> and <strong>{getMaxChildren()} Children</strong> for current selection.
-              </p>
-            </div>
-          </div>
+            </>
+          )}
 
           {/* Policies */}
-          {policies && (
+          {policies && !['buy', 'plot'].includes(propertyType?.toLowerCase()) && (
             <div className="mb-8">
               <h2 className="text-lg font-bold text-textDark mb-4">House Rules & Policies</h2>
               <div className="grid md:grid-cols-2 gap-y-4 gap-x-8 text-sm text-gray-600">
-                <div className="flex items-center gap-3">
-                  <Clock size={18} className="text-surface" />
-                  <div>
-                    <span className="font-semibold block text-textDark">Check-in</span>
-                    <span>{policies.checkInTime ? (policies.checkInTime.toString().includes(':') ? policies.checkInTime : `${policies.checkInTime}:00 AM`) : '12:00 PM'}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Clock size={18} className="text-surface" />
-                  <div>
-                    <span className="font-semibold block text-textDark">Check-out</span>
-                    <span>{policies.checkOutTime ? (policies.checkOutTime.toString().includes(':') ? policies.checkOutTime : `${policies.checkOutTime}:00 AM`) : '11:00 AM'}</span>
-                  </div>
-                </div>
+                {!['pg', 'hostel', 'rent', 'buy', 'plot'].includes(propertyType?.toLowerCase()) && (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <Clock size={18} className="text-surface" />
+                      <div>
+                        <span className="font-semibold block text-textDark">Check-in</span>
+                        <span>{policies.checkInTime ? (policies.checkInTime.toString().includes(':') ? policies.checkInTime : `${policies.checkInTime}:00 AM`) : '12:00 PM'}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Clock size={18} className="text-surface" />
+                      <div>
+                        <span className="font-semibold block text-textDark">Check-out</span>
+                        <span>{policies.checkOutTime ? (policies.checkOutTime.toString().includes(':') ? policies.checkOutTime : `${policies.checkOutTime}:00 AM`) : '11:00 AM'}</span>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {policies.cancellationPolicy && (
                   <div className="flex items-center gap-3 col-span-2 md:col-span-1">
@@ -1292,11 +1412,11 @@ const PropertyDetailsPage = () => {
           )}
 
           {/* Nearby Places */}
-          {property.nearbyPlaces && property.nearbyPlaces.length > 0 && (
+          {nearbyPlaces && nearbyPlaces.length > 0 && (
             <div className="mb-8">
               <h2 className="text-lg font-bold text-textDark mb-4">Nearby Places</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {property.nearbyPlaces.map((place, idx) => (
+                {nearbyPlaces.map((place, idx) => (
                   <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-white rounded-lg shadow-sm text-surface">

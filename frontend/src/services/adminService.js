@@ -226,6 +226,10 @@ const adminService = {
   reorderCategories: async (categories) => {
     const response = await axiosInstance.put('/categories/reorder', { categories });
     return response.data;
+  },
+  getReelAnalysis: async () => {
+    const response = await axiosInstance.get('/admin/reel-analysis');
+    return response.data;
   }
 };
 

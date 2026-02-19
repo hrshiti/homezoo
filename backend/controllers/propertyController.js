@@ -82,7 +82,7 @@ export const createProperty = async (req, res) => {
       });
     }
 
-    const { propertyName, contactNumber, propertyType, description, shortDescription, coverImage, propertyImages, amenities, address, location, nearbyPlaces, checkInTime, checkOutTime, cancellationPolicy, houseRules, documents, roomTypes, pgType, hostelType, hostLivesOnProperty, familyFriendly, resortType, activities, hotelCategory, starRating, dynamicCategory } = req.body;
+    const { propertyName, contactNumber, propertyType, description, shortDescription, coverImage, propertyImages, amenities, address, location, nearbyPlaces, checkInTime, checkOutTime, cancellationPolicy, houseRules, documents, roomTypes, pgType, hostelType, hostLivesOnProperty, familyFriendly, resortType, activities, hotelCategory, starRating, dynamicCategory, pgDetails, rentDetails, plotDetails, buyDetails } = req.body;
     if (!propertyName || !propertyType || !coverImage) return res.status(400).json({ message: 'Missing required fields' });
     const lowerType = propertyType.toLowerCase();
     const requiredDocs = PROPERTY_DOCUMENTS[lowerType] || [];
@@ -109,13 +109,17 @@ export const createProperty = async (req, res) => {
       houseRules,
       dynamicCategory: dynamicCategoryId,
       pgType: lowerType === 'pg' ? pgType : undefined,
+      pgDetails: lowerType === 'pg' ? pgDetails : undefined,
       hostelType: lowerType === 'hostel' ? hostelType : undefined,
       hostLivesOnProperty: lowerType === 'homestay' ? hostLivesOnProperty : undefined,
       familyFriendly: lowerType === 'homestay' ? familyFriendly : undefined,
       resortType: lowerType === 'resort' ? resortType : undefined,
       activities: lowerType === 'resort' ? activities : undefined,
       hotelCategory: lowerType === 'hotel' ? hotelCategory : undefined,
-      starRating: lowerType === 'hotel' ? starRating : undefined
+      starRating: lowerType === 'hotel' ? starRating : undefined,
+      rentDetails: lowerType === 'rent' ? rentDetails : undefined,
+      plotDetails: lowerType === 'plot' ? plotDetails : undefined,
+      buyDetails: lowerType === 'buy' ? buyDetails : undefined
     });
     // Pricing is now handled in RoomType for ALL types
     await doc.save();
@@ -202,6 +206,10 @@ export const updateProperty = async (req, res) => {
       'houseRules',
       'dynamicCategory',
       'pgType',
+      'pgDetails',
+      'rentDetails',
+      'plotDetails',
+      'buyDetails',
       'hostLivesOnProperty',
       'familyFriendly',
       'resortType',

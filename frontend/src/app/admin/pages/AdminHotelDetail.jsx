@@ -99,7 +99,7 @@ const OverviewTab = ({ hotel }) => (
                         <span className="font-bold block text-gray-800 leading-relaxed">
                             {hotel.address?.fullAddress || hotel.address?.area || 'N/A'}
                             <br />
-                            {hotel.address?.city}, {hotel.address?.state} {hotel.address?.pincode && `- ${hotel.address.pincode}`}
+                            {hotel.address?.city}, {hotel.address?.district ? `${hotel.address.district}, ` : ''}{hotel.address?.state} {hotel.address?.pincode && `- ${hotel.address.pincode}`}
                         </span>
                     </div>
                 </div>
@@ -108,6 +108,15 @@ const OverviewTab = ({ hotel }) => (
 
         <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
             <h3 className="font-bold text-[10px] uppercase tracking-wider text-gray-500 mb-3">About Property</h3>
+            {hotel.shortDescription && (
+                <div className="mb-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-400 mb-1">Short Description</h4>
+                    <p className="text-sm font-bold text-gray-700 uppercase tracking-tight italic">
+                        {hotel.shortDescription}
+                    </p>
+                </div>
+            )}
+            <h4 className="text-[10px] font-bold uppercase text-gray-400 mb-1">Detailed Description</h4>
             <p className="text-sm font-bold text-gray-600 leading-relaxed uppercase tracking-tight">
                 {hotel.description || 'No description provided for this property.'}
             </p>
@@ -115,6 +124,10 @@ const OverviewTab = ({ hotel }) => (
 
         {hotel.propertyType === 'plot' ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Plot Area</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.plotArea || 'Not set'} {hotel.plotDetails?.unit || 'sqft'}</p>
+                </div>
                 <div className="bg-white border border-gray-200 rounded-xl p-4">
                     <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Dimensions</h4>
                     <p className="text-sm font-bold text-gray-900">
@@ -139,24 +152,8 @@ const OverviewTab = ({ hotel }) => (
                     <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.area?.superBuiltUp || 'Not set'} {hotel.buyDetails?.area?.unit || 'sqft'}</p>
                 </div>
                 <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Carpet Area</h4>
-                    <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.area?.carpet || 'Not set'} {hotel.buyDetails?.area?.unit || 'sqft'}</p>
-                </div>
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
                     <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Ownership</h4>
                     <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.ownership || 'Not set'}</p>
-                </div>
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Floor</h4>
-                    <p className="text-sm font-bold text-gray-900">
-                        {hotel.buyDetails?.floor?.current && hotel.buyDetails?.floor?.total
-                            ? `${hotel.buyDetails.floor.current} of ${hotel.buyDetails.floor.total}`
-                            : 'Not set'}
-                    </p>
-                </div>
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Facing</h4>
-                    <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.facing || 'Not set'}</p>
                 </div>
                 <div className="bg-white border border-gray-200 rounded-xl p-4">
                     <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Property Age</h4>
@@ -185,28 +182,54 @@ const OverviewTab = ({ hotel }) => (
                     <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Tenant Preference</h4>
                     <p className="text-sm font-bold text-gray-900">{hotel.rentDetails?.tenantPreference || 'Any'}</p>
                 </div>
+                {hotel.rentDetails?.societyName && (
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Society Name</h4>
+                        <p className="text-sm font-bold text-gray-900">{hotel.rentDetails.societyName}</p>
+                    </div>
+                )}
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Water Supply</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.rentDetails?.waterSupply || 'Not specified'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4 flex justify-between items-center">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500">Electricity Incl.</h4>
+                    <p className="text-xs font-bold text-gray-900">{hotel.rentDetails?.electricityIncluded ? 'YES' : 'NO'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4 flex justify-between items-center">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500">Lift Available</h4>
+                    <p className="text-xs font-bold text-gray-900">{hotel.rentDetails?.lift ? 'YES' : 'NO'}</p>
+                </div>
             </div>
-        ) : (
+        ) : hotel.propertyType === 'pg' ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Check In</h4>
-                    <p className="text-sm font-bold text-gray-900">{hotel.checkInTime || 'Not set'}</p>
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Occupancy</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.pgDetails?.occupancy || 'Not set'}</p>
                 </div>
                 <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Check Out</h4>
-                    <p className="text-sm font-bold text-gray-900">{hotel.checkOutTime || 'Not set'}</p>
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Gender</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.pgDetails?.gender || 'Not set'}</p>
                 </div>
                 <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Average Rating</h4>
-                    <p className="text-sm font-bold text-gray-900 flex items-center gap-1">
-                        <Star size={14} className="text-yellow-400" />
-                        {hotel.avgRating?.toFixed(1) || '0.0'}
-                        <span className="text-[10px] text-gray-400 font-bold uppercase ml-1">
-                            ({hotel.totalReviews || 0} Reviews)
-                        </span>
-                    </p>
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Security Deposit</h4>
+                    <p className="text-sm font-bold text-gray-900">₹{hotel.pgDetails?.securityDeposit?.toLocaleString() || '0'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Notice Period</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.pgDetails?.noticePeriod || 'Not set'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Min Stay</h4>
+                    <p className="text-sm font-bold text-gray-900">{hotel.pgDetails?.minStay || 'Not set'}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4 flex justify-between items-center">
+                    <h4 className="text-[10px] font-bold uppercase text-gray-500">Food Included</h4>
+                    <p className="text-xs font-bold text-gray-900">{hotel.pgDetails?.foodIncluded ? 'YES' : 'NO'}</p>
                 </div>
             </div>
+        ) : (
+            null
         )}
 
         {hotel.propertyType !== 'plot' && (
@@ -225,68 +248,65 @@ const OverviewTab = ({ hotel }) => (
                     )}
                 </div>
             </div>
-        )}
+        )
+        }
 
-        {hotel.propertyType === 'plot' && (
-            <div>
-                <h3 className="font-bold text-[10px] uppercase tracking-wider text-gray-500 mb-3">Plot Features</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Boundary Marked</h4>
-                        <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.boundaryMarked ? 'Yes' : 'No'}</p>
-                    </div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Electricity Available</h4>
-                        <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.electricityAvailable ? 'Yes' : 'No'}</p>
-                    </div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Water Source</h4>
-                        <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.waterSource || 'Not specified'}</p>
-                    </div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Road Width</h4>
-                        <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.roadWidth ? `${hotel.plotDetails.roadWidth} ft` : 'Not set'}</p>
-                    </div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Approval Authority</h4>
-                        <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.approvalAuthority || 'Not specified'}</p>
-                    </div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Soil Type</h4>
-                        <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.soilType || 'Not specified'}</p>
+        {
+            hotel.propertyType === 'plot' && (
+                <div>
+                    <h3 className="font-bold text-[10px] uppercase tracking-wider text-gray-500 mb-3">Plot Features</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-white border border-gray-200 rounded-xl p-4">
+                            <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Boundary Marked</h4>
+                            <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.boundaryMarked ? 'Yes' : 'No'}</p>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded-xl p-4">
+                            <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Electricity Available</h4>
+                            <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.electricityAvailable ? 'Yes' : 'No'}</p>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded-xl p-4">
+                            <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Water Source</h4>
+                            <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.waterSource || 'Not specified'}</p>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded-xl p-4">
+                            <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Road Width</h4>
+                            <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.roadWidth ? `${hotel.plotDetails.roadWidth} ft` : 'Not set'}</p>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded-xl p-4">
+                            <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Approval Authority</h4>
+                            <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.approvalAuthority || 'Not specified'}</p>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded-xl p-4">
+                            <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Soil Type</h4>
+                            <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.soilType || 'Not specified'}</p>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded-xl p-4">
+                            <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Nearby Landmark</h4>
+                            <p className="text-sm font-bold text-gray-900">{hotel.plotDetails?.nearbyLandmark || 'Not set'}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        )}
+            )
+        }
 
-        {hotel.propertyType === 'buy' && (
+
+        {hotel.nearbyPlaces && hotel.nearbyPlaces.length > 0 && (
             <div>
-                <h3 className="font-bold text-[10px] uppercase tracking-wider text-gray-500 mb-3">Legal & Financial Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Legal Verified</h4>
-                        <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.legalVerified ? 'Yes' : 'No'}</p>
-                    </div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Loan Eligible</h4>
-                        <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.loanEligible ? 'Yes' : 'No'}</p>
-                    </div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Registration Included</h4>
-                        <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.registrationIncluded ? 'Yes' : 'No'}</p>
-                    </div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Stamp Duty Included</h4>
-                        <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.stampDutyIncluded ? 'Yes' : 'No'}</p>
-                    </div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Property Tax</h4>
-                        <p className="text-sm font-bold text-gray-900">₹{hotel.buyDetails?.propertyTax?.toLocaleString() || 'Not specified'}</p>
-                    </div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-4">
-                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-2">Builder Name</h4>
-                        <p className="text-sm font-bold text-gray-900">{hotel.buyDetails?.builderName || 'Not specified'}</p>
-                    </div>
+                <h3 className="font-bold text-[10px] uppercase tracking-wider text-gray-500 mb-3">Nearby Places</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {hotel.nearbyPlaces.map((place, i) => (
+                        <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                <MapPin size={14} />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-bold text-gray-900">{place.name}</h4>
+                                <p className="text-[10px] font-bold uppercase text-gray-500">
+                                    {place.type} • <span className="text-emerald-600">{place.distanceKm} KM</span>
+                                </p>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         )}
@@ -621,7 +641,7 @@ const RoomsTab = ({ rooms }) => {
     );
 };
 
-const BookingsTab = ({ bookings }) => (
+const BookingsTab = ({ bookings, propertyType }) => (
     <div className="space-y-4">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="relative w-full md:w-80">
@@ -634,7 +654,7 @@ const BookingsTab = ({ bookings }) => (
             </div>
             <div className="flex items-center gap-4">
                 <div className="text-[10px] font-bold uppercase text-gray-500">
-                    Total: <span className="font-bold text-gray-900">{bookings?.length || 0} Bookings</span>
+                    Total: <span className="font-bold text-gray-900">{bookings?.length || 0} {propertyType === 'rent' ? 'Rent Records' : 'Bookings'}</span>
                 </div>
             </div>
         </div>
@@ -643,9 +663,7 @@ const BookingsTab = ({ bookings }) => (
             <table className="w-full text-left text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100 uppercase text-[10px] font-bold tracking-wider text-gray-500">
                     <tr>
-                        <th className="p-4 font-bold text-gray-600">Booking ID</th>
-                        <th className="p-4 font-bold text-gray-600">Guest</th>
-                        <th className="p-4 font-bold text-gray-600">Check-In</th>
+                        <th className="p-4 font-bold text-gray-600">{propertyType === 'rent' ? 'Record ID' : 'Booking ID'}</th>
                         <th className="p-4 font-bold text-gray-600">Status</th>
                         <th className="p-4 font-bold text-gray-600 text-right">Amount</th>
                     </tr>
@@ -655,8 +673,6 @@ const BookingsTab = ({ bookings }) => (
                         bookings.map((b, i) => (
                             <tr key={i} className="hover:bg-gray-50">
                                 <td className="p-4 font-mono text-xs text-gray-500">#{b.bookingId || b._id.slice(-6)}</td>
-                                <td className="p-4 font-bold text-gray-900 uppercase text-xs">{b.userId?.name || 'Guest'}</td>
-                                <td className="p-4 text-[10px] font-bold uppercase text-gray-400">{new Date(b.checkIn).toLocaleDateString()}</td>
                                 <td className="p-4">
                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${b.status === 'confirmed' ? 'bg-green-100 text-green-700' :
                                         b.status === 'cancelled' ? 'bg-red-100 text-red-700' :
@@ -780,7 +796,7 @@ const AdminHotelDetail = () => {
         <div className="text-center py-20">
             <AlertCircle size={48} className="mx-auto text-red-400 mb-4" />
             <h2 className="text-2xl font-bold text-gray-900">Property Not Found</h2>
-            <Link to="/admin/hotels" className="mt-6 inline-block text-black font-bold uppercase text-xs border-b-2 border-black pb-1">Back to Properties</Link>
+            <Link to="/admin/properties" className="mt-6 inline-block text-black font-bold uppercase text-xs border-b-2 border-black pb-1">Back to Properties</Link>
         </div>
     );
 
@@ -789,8 +805,8 @@ const AdminHotelDetail = () => {
         { id: 'gallery', label: 'Full Gallery', icon: ImageIcon },
         { id: 'documents', label: 'KYC Documents', icon: ShieldCheck },
         ...(hotel?.propertyType !== 'plot' && hotel?.propertyType !== 'buy' ? [
-            { id: 'rooms', label: hotel?.propertyType === 'tent' ? 'Tents & Pricing' : 'Rooms & Pricing', icon: Bed },
-            { id: 'bookings', label: 'Booking History', icon: Calendar },
+            ...(hotel?.propertyType !== 'rent' ? [{ id: 'rooms', label: hotel?.propertyType === 'tent' ? 'Tents & Pricing' : 'Rooms & Pricing', icon: Bed }] : []),
+            { id: 'bookings', label: hotel?.propertyType === 'rent' ? 'Rent History' : 'Booking History', icon: Calendar },
         ] : [])
     ];
 
@@ -803,7 +819,7 @@ const AdminHotelDetail = () => {
             />
 
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-gray-500 mb-2">
-                <Link to="/admin/hotels" className="hover:text-black transition-colors">Properties</Link>
+                <Link to="/admin/properties" className="hover:text-black transition-colors">Properties</Link>
                 <span>/</span>
                 <span className="text-black font-bold">{hotel.propertyName}</span>
             </div>
@@ -892,7 +908,7 @@ const AdminHotelDetail = () => {
                         />
                     )}
                     {activeTab === 'rooms' && <RoomsTab rooms={hotel.rooms} />}
-                    {activeTab === 'bookings' && <BookingsTab bookings={bookings} />}
+                    {activeTab === 'bookings' && <BookingsTab bookings={bookings} propertyType={hotel?.propertyType} />}
                 </motion.div>
             </AnimatePresence>
         </div>

@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard, Users, Building2, Calendar, Wallet,
-    Settings, Bell, Search, LogOut, Menu, X, DollarSign, ClipboardCheck, Star, Tag, FileText, MessageSquare, CircleHelp, Home, LayoutGrid, CreditCard
+    Settings, Bell, Search, LogOut, Menu, X, DollarSign, ClipboardCheck, Star, Tag, FileText, MessageSquare, CircleHelp, Home, LayoutGrid, CreditCard, Video
 } from 'lucide-react';
 
 import logo from '../../../assets/rokologin-removebg-preview.png';
@@ -81,6 +81,7 @@ const AdminLayout = () => {
         { icon: MessageSquare, label: 'Contact Messages', path: '/admin/contact-messages' },
         { icon: CircleHelp, label: 'FAQs', path: '/admin/faqs' },
         { icon: CreditCard, label: 'Subscriptions', path: '/admin/subscriptions' },
+        { icon: Video, label: 'Reel Analysis', path: '/admin/reel-analysis' },
         { icon: Settings, label: 'Settings', path: '/admin/settings' },
     ];
 

@@ -214,19 +214,27 @@ const BookingConfirmationPage = () => {
                                     <p className="font-bold text-gray-900 text-lg">
                                         {new Date(booking.checkInDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </p>
-                                    <p className="text-xs text-gray-500">{property.checkInTime || '12:00 PM'}</p>
+                                    {!['pg', 'hostel', 'rent', 'buy', 'plot'].includes(property.propertyType?.toLowerCase()) && (
+                                        <p className="text-xs text-gray-500">{property.checkInTime || '12:00 PM'}</p>
+                                    )}
                                 </div>
                                 <div className="p-4 bg-gray-50 rounded-2xl">
                                     <p className="text-xs text-gray-400 font-bold uppercase mb-1">Check-out</p>
                                     <p className="font-bold text-gray-900 text-lg">
                                         {new Date(booking.checkOutDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </p>
-                                    <p className="text-xs text-gray-500">{property.checkOutTime || '11:00 AM'}</p>
+                                    {!['pg', 'hostel', 'rent', 'buy', 'plot'].includes(property.propertyType?.toLowerCase()) && (
+                                        <p className="text-xs text-gray-500">{property.checkOutTime || '11:00 AM'}</p>
+                                    )}
                                 </div>
 
                                 <div>
-                                    <p className="text-xs text-gray-400 font-bold mb-1">Total Nights</p>
-                                    <p className="font-semibold text-gray-900">{booking.totalNights} Night(s)</p>
+                                    <p className="text-xs text-gray-400 font-bold mb-1">
+                                        {(property.propertyType?.toLowerCase() === 'pg' || property.propertyType?.toLowerCase() === 'hostel') ? 'Duration' : 'Total Nights'}
+                                    </p>
+                                    <p className="font-semibold text-gray-900">
+                                        {(property.propertyType?.toLowerCase() === 'pg' || property.propertyType?.toLowerCase() === 'hostel') ? '1 Month' : `${booking.totalNights} Night(s)`}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-400 font-bold mb-1">Room Type</p>
@@ -234,7 +242,12 @@ const BookingConfirmationPage = () => {
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-400 font-bold mb-1">Guests</p>
-                                    <p className="font-semibold text-gray-900">{booking.guests?.adults || 1} Adults, {booking.guests?.children || 0} Children</p>
+                                    <p className="font-semibold text-gray-900">
+                                        {(property.propertyType?.toLowerCase() === 'pg' || property.propertyType?.toLowerCase() === 'hostel')
+                                            ? `${booking.rooms || 1} Bed(s)`
+                                            : `${booking.guests?.adults || 1} Adults, ${booking.guests?.children || 0} Children`
+                                        }
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-400 font-bold mb-1">Booking Unit</p>

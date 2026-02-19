@@ -60,6 +60,8 @@ const AddDynamicWizard = () => {
   const isRent = categoryName.toLowerCase().includes('rent') || categoryName.toLowerCase().includes('residential') || categoryName.toLowerCase().includes('apartment') || categoryName.toLowerCase().includes('flat') || categoryName.toLowerCase().includes('lease') || (existingProperty && existingProperty.rentDetails && Object.keys(existingProperty.rentDetails).length > 0);
   const isBuy = categoryName.toLowerCase().includes('buy') || categoryName.toLowerCase().includes('sell');
   const isPlot = categoryName.toLowerCase().includes('plot');
+  const isPg = categoryName.toLowerCase().includes('pg') || categoryName.toLowerCase().includes('co-living');
+  const isHostel = categoryName.toLowerCase().includes('hostel');
 
   // Dynamic Steps Logic
   const getWizardSteps = () => {
@@ -138,7 +140,7 @@ const AddDynamicWizard = () => {
     coverImage: '',
     propertyImages: [],
     videoUrl: '', // Universal
-    address: { country: '', state: '', city: '', area: '', fullAddress: '', pincode: '' },
+    address: { country: '', state: '', city: '', district: '', area: '', fullAddress: '', pincode: '' },
     location: { type: 'Point', coordinates: ['', ''] },
     nearbyPlaces: [],
     amenities: [],
@@ -1276,6 +1278,7 @@ const AddDynamicWizard = () => {
               <div className="grid grid-cols-2 gap-3">
                 <input className="input col-span-2" placeholder="Full Address" value={propertyForm.address.fullAddress} onChange={e => updatePropertyForm(['address', 'fullAddress'], e.target.value)} />
                 <input className="input" placeholder="City" value={propertyForm.address.city} onChange={e => updatePropertyForm(['address', 'city'], e.target.value)} />
+                <input className="input" placeholder="District" value={propertyForm.address.district} onChange={e => updatePropertyForm(['address', 'district'], e.target.value)} />
                 <input className="input" placeholder="State" value={propertyForm.address.state} onChange={e => updatePropertyForm(['address', 'state'], e.target.value)} />
                 <input className="input" placeholder="Country" value={propertyForm.address.country} onChange={e => updatePropertyForm(['address', 'country'], e.target.value)} />
                 <input className="input" placeholder="Pincode" value={propertyForm.address.pincode} onChange={e => updatePropertyForm(['address', 'pincode'], e.target.value)} />
@@ -1604,7 +1607,7 @@ const AddDynamicWizard = () => {
                                 Inventory: <span className="text-gray-900">{rt.totalInventory}</span> · Capacity: <span className="text-gray-900">{rt.maxAdults}A, {rt.maxChildren}C</span>
                               </div>
                             </div>
-                            <div className="text-lg font-bold text-emerald-600">₹{rt.pricePerNight}</div>
+                            <div className="text-lg font-bold text-emerald-600">₹{rt.pricePerNight}{isPg || isHostel ? ' / mo' : ' / nt'}</div>
                           </div>
 
                           {rt.amenities && rt.amenities.length > 0 && (
@@ -1695,7 +1698,7 @@ const AddDynamicWizard = () => {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <label className="text-xs font-semibold text-gray-500">Price / Night (₹)</label>
+                        <label className="text-xs font-semibold text-gray-500">{(isPg || isHostel) ? 'Monthly Rent (₹)' : 'Price / Night (₹)'}</label>
                         <input className="input w-full" type="number" value={editingRoomType.pricePerNight} onChange={e => setEditingRoomType(prev => ({ ...prev, pricePerNight: e.target.value }))} />
                       </div>
                       <div className="space-y-1">
@@ -1782,22 +1785,24 @@ const AddDynamicWizard = () => {
               {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>}
 
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-gray-500">Check-in Time</label>
-                    <div className="relative">
-                      <input className="input w-full !pl-12" placeholder="12:00 PM" value={propertyForm.checkInTime} onChange={e => updatePropertyForm('checkInTime', e.target.value)} />
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><Clock size={18} /></div>
+                {!isPg && !isHostel && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-gray-500">Check-in Time</label>
+                      <div className="relative">
+                        <input className="input w-full !pl-12" placeholder="12:00 PM" value={propertyForm.checkInTime} onChange={e => updatePropertyForm('checkInTime', e.target.value)} />
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><Clock size={18} /></div>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-gray-500">Check-out Time</label>
+                      <div className="relative">
+                        <input className="input w-full !pl-12" placeholder="11:00 AM" value={propertyForm.checkOutTime} onChange={e => updatePropertyForm('checkOutTime', e.target.value)} />
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><Clock size={18} /></div>
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-gray-500">Check-out Time</label>
-                    <div className="relative">
-                      <input className="input w-full !pl-12" placeholder="11:00 AM" value={propertyForm.checkOutTime} onChange={e => updatePropertyForm('checkOutTime', e.target.value)} />
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><Clock size={18} /></div>
-                    </div>
-                  </div>
-                </div>
+                )}
 
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-500">Cancellation Policy</label>
@@ -1987,8 +1992,16 @@ const AddDynamicWizard = () => {
                     <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2 mb-3">{isTent ? 'Campsite Details' : 'Property Details'}</h3>
                     <div className="space-y-1">
                       <div className="text-lg font-bold text-emerald-900">{propertyForm.propertyName || (isTent ? 'No Camp Name' : 'No Name')}</div>
+                      {propertyForm.shortDescription && <div className="text-xs text-emerald-700 italic font-medium">{propertyForm.shortDescription}</div>}
                       <div className="text-sm text-gray-600 flex items-start gap-1">
-                        <MapPin size={14} className="mt-0.5 shrink-0" /> {propertyForm.address.fullAddress || 'No Address'}
+                        <MapPin size={14} className="mt-0.5 shrink-0" />
+                        <span>
+                          {propertyForm.address.fullAddress}
+                          {propertyForm.address.city ? `, ${propertyForm.address.city}` : ''}
+                          {propertyForm.address.district ? `, ${propertyForm.address.district}` : ''}
+                          {propertyForm.address.state ? `, ${propertyForm.address.state}` : ''}
+                          {propertyForm.address.pincode ? ` - ${propertyForm.address.pincode}` : ''}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -2179,7 +2192,7 @@ const AddDynamicWizard = () => {
                             {roomTypes.map((rt, i) => (
                               <div key={i} className="flex justify-between items-center text-sm">
                                 <span className="text-gray-600 font-medium">{rt.name}</span>
-                                <span className="font-bold text-gray-900">₹{rt.pricePerNight}</span>
+                                <span className="font-bold text-gray-900">₹{rt.pricePerNight}{isPg || isHostel ? ' / month' : ' / night'}</span>
                               </div>
                             ))}
                           </div>

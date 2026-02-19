@@ -132,12 +132,10 @@ const AdminBookingDetail = () => {
                             <div>
                                 <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Check-in</p>
                                 <p className="text-lg font-bold text-gray-900">{new Date(booking.checkInDate || booking.checkIn).toLocaleDateString()}</p>
-                                <p className="text-[10px] font-bold text-gray-500 uppercase">After 12:00 PM</p>
                             </div>
                             <div>
                                 <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Check-out</p>
                                 <p className="text-lg font-bold text-gray-900">{new Date(booking.checkOutDate || booking.checkOut).toLocaleDateString()}</p>
-                                <p className="text-[10px] font-bold text-gray-500 uppercase">Before 11:00 AM</p>
                             </div>
                             <div className="col-span-2 pt-4 border-t border-gray-100">
                                 <p className="text-sm font-bold text-gray-900 mb-1 uppercase tracking-tight">Hotel: {booking.propertyId?.propertyName || booking.propertyId?.name || 'Deleted Property'}</p>
@@ -165,9 +163,6 @@ const AdminBookingDetail = () => {
                                     </p>
                                     <p className="text-gray-400 flex items-center gap-2">
                                         <Phone size={12} /> {booking.userId?.phone || 'N/A'}
-                                    </p>
-                                    <p className="text-gray-400 flex items-center gap-2">
-                                        <Users size={12} /> {booking.guests?.adults || 1} Adults, {booking.guests?.children || 0} Children
                                     </p>
                                 </div>
                             </div>

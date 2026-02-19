@@ -180,7 +180,9 @@ const PropertyCard = ({ property, data, className = "", isSaved: initialIsSaved 
             <div className="flex items-center gap-1 text-surface font-bold text-xs">
               <IndianRupee size={12} />
               {displayPrice ? displayPrice.toLocaleString() : 'Check Price'}
-              <span className="text-[10px] text-gray-400 font-normal ml-0.5">/ night</span>
+              <span className="text-[10px] text-gray-400 font-normal ml-0.5">
+                {['PG', 'Hostel', 'Rent'].includes(badgeTypeKey) ? '/ month' : ['Buy', 'Plot'].includes(badgeTypeKey) ? '' : '/ night'}
+              </span>
             </div>
           </div>
 

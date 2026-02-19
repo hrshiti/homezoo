@@ -33,7 +33,8 @@ import {
   createBroadcastNotification,
   markAllAdminNotificationsRead,
   deleteAdminNotifications,
-  getFinanceStats
+  getFinanceStats,
+  getReelAnalysis
 } from '../controllers/adminController.js';
 import { protect, authorizedRoles } from '../middlewares/authMiddleware.js';
 
@@ -80,5 +81,6 @@ router.get('/contact-messages', getContactMessages);
 router.put('/contact-messages/:id/status', updateContactStatus);
 router.get('/platform-settings', getPlatformSettings);
 router.put('/platform-settings', updatePlatformSettings);
+router.get('/reel-analysis', getReelAnalysis);
 
 export default router;

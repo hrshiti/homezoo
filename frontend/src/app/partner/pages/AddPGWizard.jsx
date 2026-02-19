@@ -1224,7 +1224,7 @@ const AddPGWizard = () => {
                                   <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">{rt.roomCategory}</span>
                                   <span>•</span>
                                   <span className="font-semibold text-gray-900">₹{rt.pricePerNight}</span>
-                                  <span className="text-xs">/ night</span>
+                                  <span className="text-xs">/ month</span>
                                 </div>
                                 <div className="flex flex-wrap gap-2 mt-3">
                                   <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded flex items-center gap-1">Beds: {rt.bedsPerRoom}</span>
@@ -1522,6 +1522,18 @@ const AddPGWizard = () => {
                         <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-[10px] font-bold rounded uppercase">{roomTypes.length} Inventory Types</span>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <h4 className="font-bold text-gray-900 text-sm mb-3">Inventory Summary</h4>
+                  <div className="space-y-2">
+                    {roomTypes.map((rt, i) => (
+                      <div key={i} className="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-lg">
+                        <span className="text-gray-600">{rt.name}</span>
+                        <span className="font-bold text-emerald-700">₹{rt.pricePerNight} / month</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 

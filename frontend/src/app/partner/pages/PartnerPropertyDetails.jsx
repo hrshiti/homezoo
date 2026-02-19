@@ -364,7 +364,9 @@ const PartnerPropertyDetails = () => {
                             </div>
                             <div className="text-right">
                               <div className="text-lg font-bold text-emerald-700">₹{room.pricePerNight}</div>
-                              <div className="text-[10px] text-gray-400 font-medium">/ night</div>
+                              <div className="text-[10px] text-gray-400 font-medium">
+                                {['pg', 'hostel', 'rent'].includes(property.propertyType?.toLowerCase()) ? '/ month' : ['buy', 'plot'].includes(property.propertyType?.toLowerCase()) ? '' : '/ night'}
+                              </div>
                             </div>
                           </div>
 
@@ -416,16 +418,18 @@ const PartnerPropertyDetails = () => {
 
               {activeSection === 'rules' && (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
-                      <p className="text-xs text-gray-500 uppercase font-bold mb-1">Check-in</p>
-                      <p className="text-sm font-bold text-gray-900">{property.checkInTime || 'N/A'}</p>
+                  {!['pg', 'hostel', 'rent', 'buy', 'plot'].includes(property.propertyType?.toLowerCase()) && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                        <p className="text-xs text-gray-500 uppercase font-bold mb-1">Check-in</p>
+                        <p className="text-sm font-bold text-gray-900">{property.checkInTime || 'N/A'}</p>
+                      </div>
+                      <div className="p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                        <p className="text-xs text-gray-500 uppercase font-bold mb-1">Check-out</p>
+                        <p className="text-sm font-bold text-gray-900">{property.checkOutTime || 'N/A'}</p>
+                      </div>
                     </div>
-                    <div className="p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
-                      <p className="text-xs text-gray-500 uppercase font-bold mb-1">Check-out</p>
-                      <p className="text-sm font-bold text-gray-900">{property.checkOutTime || 'N/A'}</p>
-                    </div>
-                  </div>
+                  )}
 
                   <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-2">
                     <h4 className="font-bold text-sm text-gray-900">Cancellation Policy</h4>
@@ -597,7 +601,9 @@ const PartnerPropertyDetails = () => {
                     </div>
                     <div className="text-right">
                       <div className="text-xl font-bold text-emerald-700">₹{selectedRoom.pricePerNight}</div>
-                      <div className="text-xs text-gray-400 font-medium">/ night</div>
+                      <div className="text-xs text-gray-400 font-medium">
+                        {['pg', 'hostel', 'rent'].includes(property.propertyType?.toLowerCase()) ? '/ month' : ['buy', 'plot'].includes(property.propertyType?.toLowerCase()) ? '' : '/ night'}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -639,7 +645,9 @@ const PartnerPropertyDetails = () => {
                   {showPricing && (
                     <div className="p-4 bg-white border-t border-gray-100 space-y-3 animate-in slide-in-from-top-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Base Price (Per Night)</span>
+                        <span className="text-gray-500">
+                          {['pg', 'hostel', 'rent'].includes(property.propertyType?.toLowerCase()) ? 'Monthly Rent' : ['buy', 'plot'].includes(property.propertyType?.toLowerCase()) ? 'Total Price' : 'Base Price (Per Night)'}
+                        </span>
                         <span className="font-medium text-gray-900">₹{selectedRoom.pricePerNight}</span>
                       </div>
                       <div className="flex justify-between text-sm">

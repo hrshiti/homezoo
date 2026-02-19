@@ -15,6 +15,7 @@ import emailService from '../services/emailService.js';
 import notificationService from '../services/notificationService.js';
 import Wallet from '../models/Wallet.js';
 import Transaction from '../models/Transaction.js';
+import Reel from '../models/Reel.js';
 
 
 
@@ -1200,5 +1201,53 @@ export const getFinanceStats = async (req, res) => {
   } catch (error) {
     console.error('Get Finance Stats Error:', error);
     res.status(500).json({ success: false, message: 'Server error fetching finance stats' });
+  }
+};
+
+export const getReelAnalysis = async (req, res) => {
+  try {
+    const totalReels = await Reel.countDocuments();
+
+    const userStats = await Reel.aggregate([
+      {
+        $group: {
+          _id: '$user',
+          reelCount: { $sum: 1 },
+          totalLikes: { $sum: '$likesCount' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'userDetails'
+        }
+      },
+      {
+        $unwind: '$userDetails'
+      },
+      {
+        $project: {
+          _id: 1,
+          userName: '$userDetails.name',
+          userPhone: '$userDetails.phone',
+          reelCount: 1,
+          totalLikes: 1
+        }
+      },
+      {
+        $sort: { reelCount: -1 }
+      }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      totalReels,
+      userStats
+    });
+  } catch (error) {
+    console.error('Get Reel Analysis Error:', error);
+    res.status(500).json({ success: false, message: 'Server error fetching reel analysis' });
   }
 };

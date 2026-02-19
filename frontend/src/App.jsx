@@ -69,6 +69,7 @@ const AdminNotifications = React.lazy(() => import('./app/admin/pages/AdminNotif
 const AdminFaqs = React.lazy(() => import('./app/admin/pages/AdminFaqs'));
 const AdminCategories = React.lazy(() => import('./app/admin/pages/AdminCategories'));
 const AdminSubscriptions = React.lazy(() => import('./app/admin/pages/AdminSubscriptions'));
+const AdminReelAnalysis = React.lazy(() => import('./app/admin/pages/AdminReelAnalysis'));
 
 // Lazy Imports - Partner Pages
 const HotelLogin = React.lazy(() => import('./pages/auth/HotelLoginPage'));
@@ -468,6 +469,7 @@ function App() {
                 <Route path="faqs" element={<AdminFaqs />} />
                 <Route path="categories" element={<AdminCategories />} />
                 <Route path="subscriptions" element={<AdminSubscriptions />} />
+                <Route path="reel-analysis" element={<AdminReelAnalysis />} />
               </Route>
             </Route>
 
