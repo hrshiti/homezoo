@@ -28,9 +28,10 @@ const io = new Server(server, {
     origin: process.env.FRONTEND_URL || [
       'http://localhost:5173',
       'http://127.0.0.1:5173',
-      'https://rukkoo.in',
-      'https://www.rukkoo.in',
-      'https://rukkoo-project.vercel.app'
+      'https://homezoo.vercel.app',
+      'homezoo.vercel.app',
+
+
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
@@ -80,10 +81,12 @@ app.use(cors({
     // Check if origin is localhost or local network IP
     const allowedOrigins = [
       'http://localhost:5173',
-      'http://127.0.0.1:5173',
+      'http://126.0.0.1:5173',
       'https://rukkoo.in',
       'https://www.rukkoo.in',
-      'https://rukkoo-project.vercel.app'
+      'https://rukkoo-project.vercel.app',
+      'https://homezoo.vercel.app',
+      'https://homezoo.onrender.com'
     ];
     // Add 172.16-31 range (often used by hotspots) and 10.x
     const isLocalNetwork =
