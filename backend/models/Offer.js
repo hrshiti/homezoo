@@ -26,6 +26,11 @@ const offerSchema = new mongoose.Schema({
     enum: ['percentage', 'flat'],
     default: 'percentage'
   },
+  allowedPropertyType: {
+    type: String,
+    enum: ['all', 'pg', 'hostel', 'hotel', 'resort', 'villa', 'homestay'], // comprehensive list
+    default: 'all'
+  },
   discountValue: {
     type: Number,
     required: true

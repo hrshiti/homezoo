@@ -240,7 +240,12 @@ export const createBooking = async (req, res) => {
         });
         const isUnderUserLimit = userUsageCount < (offer.userLimit || 1);
 
-        if (isValidDate && isValidAmount && isUnderUserLimit) {
+        // --- ENFORCE PROPERTY TYPE RESTRICTION ---
+        const isAllowedType = !offer.allowedPropertyType ||
+          offer.allowedPropertyType === 'all' ||
+          offer.allowedPropertyType === pType;
+
+        if (isValidDate && isValidAmount && isUnderUserLimit && isAllowedType) {
           if (offer.discountType === 'percentage') {
             discountAmount = (grossAmount * offer.discountValue) / 100;
             if (offer.maxDiscount) {
@@ -252,6 +257,8 @@ export const createBooking = async (req, res) => {
           discountAmount = Math.floor(discountAmount);
           discountAmount = Math.min(discountAmount, grossAmount); // Cannot exceed gross
           appliedCoupon = offer.code;
+        } else if (!isAllowedType) {
+          console.log(`Coupon ${couponCode} not allowed for property type ${pType}`);
         }
       }
     }

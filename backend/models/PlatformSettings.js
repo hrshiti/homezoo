@@ -29,6 +29,14 @@ const platformSettingsSchema = new mongoose.Schema(
     taxRate: {
       type: Number,
       default: 12 // Percentage (GST)
+    },
+    reelCouponTarget: {
+      type: Number,
+      default: 1000 // Default target likes
+    },
+    reelCouponDiscount: {
+      type: Number,
+      default: 500 // Default flat discount
     }
   },
   { timestamps: true }

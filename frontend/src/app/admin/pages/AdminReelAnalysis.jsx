@@ -7,6 +7,11 @@ const AdminReelAnalysis = () => {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState({ totalReels: 0, userStats: [] });
     const [searchTerm, setSearchTerm] = useState('');
+    const [couponSettings, setCouponSettings] = useState({
+        reelCouponTarget: 1000,
+        reelCouponDiscount: 500
+    });
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -21,12 +26,30 @@ const AdminReelAnalysis = () => {
                     totalReels: res.totalReels,
                     userStats: res.userStats
                 });
+                if (res.settings) {
+                    setCouponSettings(res.settings);
+                }
             }
         } catch (error) {
             console.error('Error fetching reel analysis:', error);
             toast.error('Failed to load reel analysis');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSaveSettings = async () => {
+        try {
+            setSaving(true);
+            const res = await adminService.updatePlatformSettings(couponSettings);
+            if (res.success) {
+                toast.success('Coupon settings updated successfully');
+            }
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            toast.error('Failed to update settings');
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -83,6 +106,50 @@ const AdminReelAnalysis = () => {
                     icon={<Heart className="w-6 h-6 text-red-500" />}
                     color="bg-red-50"
                 />
+            </div>
+
+            {/* Reward Settings */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                    <div className="p-2 bg-amber-50 rounded-lg">
+                        <Heart className="w-5 h-5 text-amber-500 fill-current" />
+                    </div>
+                    <h2 className="text-lg font-bold text-gray-800">Reel Reward Logic</h2>
+                </div>
+                <p className="text-sm text-gray-500">Automatically generate a PG-only discount coupon when a user's reel reaches a specific like count.</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Target Likes per Reel</label>
+                        <input
+                            type="number"
+                            value={couponSettings.reelCouponTarget}
+                            onChange={(e) => setCouponSettings({ ...couponSettings, reelCouponTarget: e.target.value })}
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                            placeholder="e.g. 1000"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Discount Amount (Flat ₹)</label>
+                        <input
+                            type="number"
+                            value={couponSettings.reelCouponDiscount}
+                            onChange={(e) => setCouponSettings({ ...couponSettings, reelCouponDiscount: e.target.value })}
+                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                            placeholder="e.g. 500"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                    <button
+                        onClick={handleSaveSettings}
+                        disabled={saving}
+                        className="flex items-center gap-2 px-6 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 transition-all shadow-md shadow-teal-500/20"
+                    >
+                        {saving ? <Loader2 size={16} className="animate-spin" /> : 'Save reward Logic'}
+                    </button>
+                </div>
             </div>
 
             {/* Analysis Table */}

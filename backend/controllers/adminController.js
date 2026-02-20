@@ -892,34 +892,32 @@ export const getPlatformSettings = async (req, res) => {
 
 export const updatePlatformSettings = async (req, res) => {
   try {
-    const { platformOpen, maintenanceMode, bookingDisabledMessage, maintenanceTitle, maintenanceMessage } = req.body;
+    const {
+      platformOpen,
+      maintenanceMode,
+      bookingDisabledMessage,
+      maintenanceTitle,
+      maintenanceMessage,
+      defaultCommission,
+      taxRate,
+      reelCouponTarget,
+      reelCouponDiscount
+    } = req.body;
+
     const settings = await PlatformSettings.getSettings();
 
-    if (typeof platformOpen === 'boolean') {
-      settings.platformOpen = platformOpen;
-    }
-    if (typeof maintenanceMode === 'boolean') {
-      settings.maintenanceMode = maintenanceMode;
-    }
-    if (typeof bookingDisabledMessage === 'string') {
-      settings.bookingDisabledMessage = bookingDisabledMessage;
-    }
-    if (typeof maintenanceTitle === 'string') {
-      settings.maintenanceTitle = maintenanceTitle;
-    }
-    if (typeof maintenanceMessage === 'string') {
-      settings.maintenanceMessage = maintenanceMessage;
-    }
+    if (typeof platformOpen === 'boolean') settings.platformOpen = platformOpen;
+    if (typeof maintenanceMode === 'boolean') settings.maintenanceMode = maintenanceMode;
+    if (typeof bookingDisabledMessage === 'string') settings.bookingDisabledMessage = bookingDisabledMessage;
+    if (typeof maintenanceTitle === 'string') settings.maintenanceTitle = maintenanceTitle;
+    if (typeof maintenanceMessage === 'string') settings.maintenanceMessage = maintenanceMessage;
 
-    if (req.body.defaultCommission !== undefined) {
-      settings.defaultCommission = Number(req.body.defaultCommission);
-    }
-    if (req.body.taxRate !== undefined) {
-      settings.taxRate = Number(req.body.taxRate);
-    }
+    if (defaultCommission !== undefined) settings.defaultCommission = Number(defaultCommission);
+    if (taxRate !== undefined) settings.taxRate = Number(taxRate);
+    if (reelCouponTarget !== undefined) settings.reelCouponTarget = Number(reelCouponTarget);
+    if (reelCouponDiscount !== undefined) settings.reelCouponDiscount = Number(reelCouponDiscount);
 
     await settings.save();
-
     res.status(200).json({ success: true, settings });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error updating platform settings' });
@@ -1241,10 +1239,16 @@ export const getReelAnalysis = async (req, res) => {
       }
     ]);
 
+    const settings = await PlatformSettings.getSettings();
+
     res.status(200).json({
       success: true,
       totalReels,
-      userStats
+      userStats,
+      settings: {
+        reelCouponTarget: settings.reelCouponTarget,
+        reelCouponDiscount: settings.reelCouponDiscount
+      }
     });
   } catch (error) {
     console.error('Get Reel Analysis Error:', error);
