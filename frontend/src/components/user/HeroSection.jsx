@@ -63,10 +63,10 @@ const HeroSection = ({ theme }) => {
 
     return (
         <motion.section
-            className={`relative w-full px-5 pt-6 pb-8 flex flex-col gap-5 md:gap-3 md:pt-8 md:pb-4 bg-transparent transition-all duration-300`}
+            className={`relative w-full px-5 pt-4 pb-4 flex flex-col gap-4 md:gap-3 md:pt-8 md:pb-4 bg-transparent transition-all duration-300`}
         >
             {/* 1. Header Row (Hides on Scroll) */}
-            <div className={`flex md:hidden items-center justify-between relative h-24 transition-all duration-300 ${isSticky ? 'opacity-0 h-0 overflow-hidden mb-0' : 'opacity-100 mb-0'}`}>
+            <div className={`flex md:hidden items-center justify-between relative h-16 transition-all duration-300 ${isSticky ? 'opacity-0 h-0 overflow-hidden mb-0' : 'opacity-100 mb-0'}`}>
                 {/* Menu Button */}
                 <button
                     onClick={() => setIsMenuOpen(true)}

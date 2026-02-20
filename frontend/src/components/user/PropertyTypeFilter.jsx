@@ -95,7 +95,7 @@ const PropertyTypeFilter = ({ selectedType, onSelectType, theme }) => {
       className="relative w-full border-b border-gray-100 bg-white"
     >
       {/* Web: centered & larger; Mobile: scrollable as before */}
-      <div className="flex gap-3 overflow-x-auto px-5 py-4 no-scrollbar relative max-w-7xl mx-auto items-center justify-center md:justify-center md:flex-wrap md:gap-4 md:overflow-visible">
+      <div className="flex gap-4 overflow-x-auto px-6 py-4 no-scrollbar relative max-w-7xl mx-auto items-center justify-start sm:justify-center md:justify-center md:flex-wrap md:gap-6 md:overflow-visible">
         {allTypes.map((type) => {
           const Icon = type.icon;
           // Handle selection: null for "All", exact match, or if IDs overlap (for grouped categories)
