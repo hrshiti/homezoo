@@ -31,13 +31,10 @@ const SearchPage = () => {
     const [location, setLocation] = useState(null); // { lat, lng }
     const [propertyTypes, setPropertyTypes] = useState([
         { id: 'all', label: 'All' },
-        { id: 'hotel', label: 'Hotel' },
-        { id: 'villa', label: 'Villa' },
-        { id: 'resort', label: 'Resort' },
-        { id: 'homestay', label: 'Homestay' },
         { id: 'pg', label: 'PG' },
-        { id: 'hostel', label: 'Hostel' },
-        { id: 'tent', label: 'Tent' }
+        { id: 'rent', label: 'Rent' },
+        { id: 'buy', label: 'Buy' },
+        { id: 'plot', label: 'Plot' }
     ]);
 
     useEffect(() => {
@@ -45,20 +42,28 @@ const SearchPage = () => {
             try {
                 const res = await api.get('/categories/active');
                 if (res.data) {
-                    setPropertyTypes(prev => {
-                        const staticTypes = prev.filter(p => !p.isDynamic);
-                        // Create a set of normalized static labels for easy lookup
-                        const staticLabels = new Set(staticTypes.map(t => t.label.toLowerCase()));
+                    const categories = res.data;
 
-                        const dynamic = res.data
-                            .filter(cat => !staticLabels.has(cat.displayName.toLowerCase()))
-                            .map(cat => ({
-                                id: cat._id,
-                                label: cat.displayName,
-                                isDynamic: true
-                            }));
-                        return [...staticTypes, ...dynamic];
-                    });
+                    const findId = (names) => {
+                        const searchNames = Array.isArray(names) ? names : [names];
+                        const found = categories.find(c =>
+                            searchNames.some(n =>
+                                (c.displayName || '').toLowerCase() === n.toLowerCase() ||
+                                (c.name || '').toLowerCase() === n.toLowerCase()
+                            )
+                        );
+                        return found ? found._id : null;
+                    };
+
+                    const updatedTypes = [
+                        { id: 'all', label: 'All' },
+                        { id: findId(['pg', 'hostel', 'pg/co-living', 'co-living', 'paying guest']) || 'pg', label: 'PG' },
+                        { id: findId('rent') || 'rent', label: 'Rent' },
+                        { id: findId('buy') || 'buy', label: 'Buy' },
+                        { id: findId(['plot', 'plots']) || 'plot', label: 'Plot' }
+                    ];
+
+                    setPropertyTypes(updatedTypes);
                 }
             } catch (err) {
                 console.warn("Failed to fetch dynamic categories:", err);
@@ -66,6 +71,29 @@ const SearchPage = () => {
         };
         fetchCategories();
     }, []);
+
+    const getAmenitiesOptions = () => {
+        const currentType = Array.isArray(filters.type) ? filters.type[0] : filters.type;
+        if (!currentType || currentType === 'all') return ['Wi-Fi', 'AC', 'Parking', 'Kitchen', 'Geyser', 'Power Backup'];
+
+        const typeObj = propertyTypes.find(t => t.id === currentType);
+        const label = typeObj ? typeObj.label.toLowerCase() : '';
+
+        if (label.includes('pg') || label.includes('hostel')) {
+            return ['Boys Only', 'Girls Only', 'Coliving', '1 Seater', '2 Seater', '3 Seater', 'Wi-Fi', 'AC', 'Food', 'Laundry'];
+        }
+        if (label.includes('rent')) {
+            return ['1 BHK', '2 BHK', '3 BHK', 'Furnished', 'Semi-Furnished', 'Unfurnished', 'Parking', 'Kitchen', 'Security'];
+        }
+        if (label.includes('buy')) {
+            return ['Flat', 'House', 'Villa', 'East Facing', 'West Facing', 'North Facing', 'South Facing', 'Ready to Move', 'Under Construction'];
+        }
+        if (label.includes('plot')) {
+            return ['Residential', 'Commercial', 'East Facing', 'West Facing', 'Boundary Wall', 'Gated Community', 'Red Soil', 'Black Soil'];
+        }
+
+        return ['Wi-Fi', 'AC', 'Parking', 'Kitchen', 'Geyser', 'Power Backup'];
+    };
 
     useEffect(() => {
         fetchProperties();
@@ -243,7 +271,7 @@ const SearchPage = () => {
                         selectedType={Array.isArray(filters.type) ? filters.type[0] : filters.type}
                         onSelectType={(type) => {
                             const newType = type === 'All' ? 'all' : type;
-                            setFilters(prev => ({ ...prev, type: newType }));
+                            setFilters(prev => ({ ...prev, type: newType, amenities: [] }));
 
                             // Immediately apply and search
                             const params = { ...Object.fromEntries([...searchParams]) };
@@ -252,6 +280,8 @@ const SearchPage = () => {
                             } else {
                                 params.type = newType;
                             }
+                            // Clear amenities from URL when switching type
+                            delete params.amenities;
                             setSearchParams(params);
                         }}
                     />
@@ -387,26 +417,15 @@ const SearchPage = () => {
                                     const typeValue = type.id;
                                     const isSelected = typeValue === 'all'
                                         ? filters.type === 'all'
-                                        : Array.isArray(filters.type) && filters.type.includes(typeValue);
+                                        : (Array.isArray(filters.type) ? filters.type.includes(typeValue) : filters.type === typeValue);
 
                                     return (
                                         <button
                                             key={type.id}
                                             onClick={() => {
-                                                if (typeValue === 'all') {
-                                                    updateFilter('type', 'all');
-                                                } else {
-                                                    let currentTypes = Array.isArray(filters.type) ? [...filters.type] : [];
-                                                    if (filters.type === 'all') currentTypes = [];
-
-                                                    if (currentTypes.includes(typeValue)) {
-                                                        currentTypes = currentTypes.filter(t => t !== typeValue);
-                                                        if (currentTypes.length === 0) currentTypes = 'all';
-                                                    } else {
-                                                        currentTypes.push(typeValue);
-                                                    }
-                                                    updateFilter('type', currentTypes);
-                                                }
+                                                const newType = typeValue === 'all' ? 'all' : typeValue;
+                                                // Clear amenities when switching types as they are context-specific
+                                                setFilters(prev => ({ ...prev, type: newType, amenities: [] }));
                                             }}
                                             className={`px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-all truncate
                                             ${isSelected
@@ -450,9 +469,9 @@ const SearchPage = () => {
 
                         {/* Amenities */}
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Amenities</label>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Amenities & Features</label>
                             <div className="flex flex-wrap gap-1.5">
-                                {['Wi-Fi', 'AC', 'TV', 'Parking', 'Pool', 'Kitchen', 'Geyser', 'Power Backup'].map((amenity) => (
+                                {getAmenitiesOptions().map((amenity) => (
                                     <button
                                         key={amenity}
                                         onClick={() => {

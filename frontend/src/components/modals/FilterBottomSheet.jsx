@@ -44,12 +44,11 @@ const FilterBottomSheet = ({
     ];
 
     const categories = [
-        "Townhouse", "Flagship", "Silver Key",
-        "Collection O", "Spot On", "Capital O"
+        "PG/Co-Living", "Rent", "Buy", "Plot"
     ];
 
     const collections = [
-        "Family HoomZos", "For Group Travellers", "Business Travellers"
+        "Boys Only", "Girls Only", "Coliving", "Family Friendly", "Bachelor Friendly"
     ];
 
     // Price Range Constants
@@ -215,11 +214,11 @@ const FilterBottomSheet = ({
                                 </div>
                             </section>
 
-                            {/* Hotel Facilities */}
+                            {/* Property Facilities */}
                             <section ref={setSectionRef("HotelFacilities")}>
-                                <h3 className="font-bold text-lg text-surface mb-3">Hotel Facilities</h3>
+                                <h3 className="font-bold text-lg text-surface mb-3">Property Facilities</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {["Parking", "Kitchen", "CCTV Cameras", "Power backup"].map(fac => (
+                                    {["Parking", "Kitchen", "Security", "Power backup", "Wi-Fi", "Food Service"].map(fac => (
                                         <button
                                             key={fac}
                                             onClick={() => toggleFilter(fac)}
@@ -234,11 +233,11 @@ const FilterBottomSheet = ({
                                 </div>
                             </section>
 
-                            {/* Room Facilities */}
+                            {/* Features & Amenities */}
                             <section ref={setSectionRef("RoomFacilities")}>
-                                <h3 className="font-bold text-lg text-surface mb-3">Room Facilities</h3>
+                                <h3 className="font-bold text-lg text-surface mb-3">Features & Amenities</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {["TV", "AC", "Geyser", "Mini Fridge"].map(fac => (
+                                    {["TV", "AC", "Geyser", "East Facing", "West Facing", "Boundary Wall", "1 Seater", "2 Seater", "3 Seater"].map(fac => (
                                         <button
                                             key={fac}
                                             onClick={() => toggleFilter(fac)}
@@ -321,7 +320,7 @@ const FilterBottomSheet = ({
                                 onClick={onClose}
                                 className="w-full bg-surface text-white font-bold py-3.5 rounded-lg shadow-lg hover:bg-black/90 transition-colors"
                             >
-                                Show {filteredCount > 0 ? filteredCount : ''} HoomZos
+                                Show {filteredCount > 0 ? filteredCount : ''} Properties
                             </button>
                         </div>
 

@@ -47,51 +47,32 @@ const PropertyTypeFilter = ({ selectedType, onSelectType, theme }) => {
         const plotIds = findCategoryIds(['Plot', 'Plots']);
 
         const staticList = [
-
           {
-            id: pgIds.length > 0 ? pgIds.join(',') : null,
+            id: pgIds.length > 0 ? pgIds.join(',') : 'pg',
             label: 'PG/Co-Living',
-            icon: LucideIcons.BedDouble, // Importing lucide-react as LucideIcons
+            icon: LucideIcons.BedDouble,
             isDynamic: true
           },
           {
-            id: rentIds.length > 0 ? rentIds.join(',') : null,
+            id: rentIds.length > 0 ? rentIds.join(',') : 'rent',
             label: 'Rent',
             icon: LucideIcons.Home,
             isDynamic: true
           },
           {
-            id: buyIds.length > 0 ? buyIds.join(',') : null,
+            id: buyIds.length > 0 ? buyIds.join(',') : 'buy',
             label: 'Buy',
             icon: LucideIcons.Landmark,
             isDynamic: true
           },
           {
-            id: plotIds.length > 0 ? plotIds.join(',') : null,
+            id: plotIds.length > 0 ? plotIds.join(',') : 'plot',
             label: 'Plot',
             icon: LucideIcons.TreePine,
             isDynamic: true
           }
         ];
 
-        // Filter out any that didn't resolve an ID if strictly necessary, 
-        // OR keep them disabled/generic. Requirements say "static category", 
-        // so we show them even if ID is missing (though functionality might be limited).
-        // However, for search filter, having an ID is crucial. 
-        // Let's filter out ones where ID is null to avoid broken filters, 
-        // but arguably if they are "static" they should appear. 
-        // For now, checks if ID exists to avoid broken behaviour.
-
-        const validStaticList = staticList.filter(item => item.id !== null);
-
-        // If you want them to ALWAYS appear even if backend is missing them (and thus broken), 
-        // remove the filter. But better to show only working ones or all.
-        // User said "static category... admin ke hatane per na hate".
-        // This implies even if Admin deletes 'Rent', the tab should stay (but maybe be empty).
-        // So we will display them all, but ID will be null (handling in parent/search needed? 
-        // If ID is null, filtering won't work).
-
-        // Let's stick to showing them.
         setAllTypes([ALL_OPTION, ...staticList]);
 
       } catch (error) {
