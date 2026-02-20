@@ -16,11 +16,10 @@ const BottomNavbar = () => {
     ];
 
     const getActiveTab = (path) => {
-        if (path === '/') return 'Home';
         if (path.includes('listings') || path.includes('search')) return 'Search';
         if (path.includes('reels')) return 'Reels';
-        if (path.includes('bookings')) return 'Bookings';
-        if (path.includes('profile')) return 'Profile';
+        if (path.includes('bookings') || path.includes('checkout')) return 'Bookings';
+        if (path.includes('profile') || path.includes('account')) return 'Profile';
         return 'Home';
     };
 
@@ -31,13 +30,12 @@ const BottomNavbar = () => {
     };
 
     return (
-        <div className="md:hidden fixed bottom-4 left-4 right-4 z-50 print:hidden">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-[100] print:hidden">
             <div className="
-        bg-white/95 backdrop-blur-2xl 
-        border border-white/40 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)]
-        rounded-[24px]
+        bg-white/95 backdrop-blur-xl 
+        border-t border-gray-100 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]
         flex justify-between items-center 
-        px-3 py-3
+        px-2 pt-2 pb-0 h-[60px]
       ">
                 {navItems.map((item) => {
                     const Icon = item.icon;
@@ -47,24 +45,24 @@ const BottomNavbar = () => {
                         <button
                             key={item.name}
                             onClick={() => handleNavClick(item)}
-                            className="relative flex flex-col items-center justify-center w-full gap-1 p-1"
+                            className="relative flex flex-col items-center justify-center w-full h-full gap-0.5 p-1"
                         >
                             {isActive && (
                                 <motion.div
                                     layoutId="active-pill"
-                                    className="absolute inset-x-2 inset-y-0 bg-accent/15 rounded-xl -z-10"
+                                    className="absolute inset-x-2 top-1 bottom-1 bg-surface/10 rounded-xl -z-10"
                                     initial={false}
                                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                 />
                             )}
 
                             <Icon
-                                size={22}
-                                className={`transition-colors duration-200 ${isActive ? 'text-surface fill-surface/10' : 'text-gray-400'}`}
+                                size={24}
+                                className={`transition-colors duration-200 ${isActive ? 'text-surface fill-surface/20' : 'text-gray-400'}`}
                                 strokeWidth={isActive ? 2.5 : 2}
                             />
 
-                            <span className={`text-[9px] font-bold tracking-wide transition-colors duration-200 ${isActive ? 'text-surface' : 'text-gray-400'}`}>
+                            <span className={`text-[10px] font-bold tracking-wide transition-colors duration-200 ${isActive ? 'text-surface' : 'text-gray-500'}`}>
                                 {item.name}
                             </span>
                         </button>

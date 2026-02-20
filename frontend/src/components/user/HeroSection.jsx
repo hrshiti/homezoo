@@ -6,7 +6,8 @@ import MobileMenu from '../../components/ui/MobileMenu';
 import { useNavigate } from 'react-router-dom';
 import walletService from '../../services/walletService';
 
-const HeroSection = () => {
+const HeroSection = ({ theme }) => {
+    const accentColor = theme?.accent || '#10B981';
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -50,7 +51,7 @@ const HeroSection = () => {
     useEffect(() => {
         const handleScroll = () => {
             const scrollY = window.scrollY;
-            setIsSticky(scrollY > 80);
+            setIsSticky(scrollY > 120);
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
@@ -69,18 +70,19 @@ const HeroSection = () => {
                 {/* Menu Button */}
                 <button
                     onClick={() => setIsMenuOpen(true)}
-                    className="p-2.5 rounded-xl bg-amber-400/20 hover:bg-amber-400/35 backdrop-blur-md transition-all duration-300 border border-amber-300/30 shadow-lg shadow-amber-900/10 active:scale-90"
+                    className="p-2.5 rounded-xl bg-emerald-100/20 hover:bg-emerald-100/35 backdrop-blur-md transition-all duration-300 border border-emerald-100/30 shadow-lg shadow-emerald-900/10 active:scale-90"
                 >
-                    <Menu size={18} className="text-amber-100" />
+                    <Menu size={18} className="text-emerald-50" />
                 </button>
 
                 {/* Logo */}
                 <div className="flex flex-col items-start leading-none ml-3">
-                    <span className="text-2xl font-black tracking-tight text-white flex items-center gap-0 drop-shadow-[0_2px_8px_rgba(251,191,36,0.3)]">
-                        HOOM<span className="text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.5)]">ZO</span>
+                    <span className="text-2xl font-black tracking-tight text-white flex items-center gap-0 drop-shadow-md">
+                        HOOM<span style={{ color: accentColor }} className="drop-shadow-[0_0_12px_rgba(255,255,255,0.3)]">ZO</span>
                     </span>
                     <motion.div
-                        className="h-[3px] w-8 bg-gradient-to-r from-amber-300 to-amber-500 rounded-full"
+                        className="h-[3px] w-8 rounded-full"
+                        style={{ backgroundColor: accentColor }}
                         animate={{ width: [32, 24, 32] }}
                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                     />
@@ -91,9 +93,9 @@ const HeroSection = () => {
                 {/* Wallet Balance Display */}
                 <button
                     onClick={() => navigate('/wallet')}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-400/20 to-amber-500/10 backdrop-blur-md border border-amber-300/25 shadow-lg shadow-amber-900/10 active:scale-95 transition-all duration-300 hover:from-amber-400/30 hover:to-amber-500/20"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-400/20 to-emerald-500/10 backdrop-blur-md border border-emerald-300/25 shadow-lg shadow-emerald-900/10 active:scale-95 transition-all duration-300 hover:from-emerald-400/30 hover:to-emerald-500/20"
                 >
-                    <div className="w-6 h-6 bg-gradient-to-br from-amber-300 to-amber-500 rounded-lg flex items-center justify-center shadow-md shadow-amber-500/30">
+                    <div className="w-6 h-6 bg-gradient-to-br from-emerald-300 to-emerald-500 rounded-lg flex items-center justify-center shadow-md shadow-emerald-500/30">
                         <Wallet size={12} className="text-white" />
                     </div>
                     <div className="flex flex-col items-start leading-none">
@@ -115,27 +117,36 @@ const HeroSection = () => {
                 Find your space — PG/Co-Living, Rent, Buy & Plots. Your home, your way.
             </p>
 
-            {/* 2. Search Bar - Sticky Logic */}
-            <div className={`
-                 w-full transition-all duration-300 z-50
-                 ${isSticky ? 'fixed top-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-xl shadow-md border-b border-amber-100/50' : 'relative'}
-            `}>
-                <div
+            {/* 2. Search Bar - Sticky Logic with smooth animation */}
+            <motion.div
+                layout
+                className={`
+                    w-full z-50
+                    ${isSticky
+                        ? 'fixed top-0 md:top-24 left-0 right-0 p-3 bg-white/95 backdrop-blur-xl shadow-lg border-b border-gray-100/50'
+                        : 'relative mt-2 md:mt-4'}
+                `}
+            >
+                <motion.div
+                    layout
                     onClick={handleSearchClick}
                     className={`
-                    w-full 
-                    ${isSticky ? 'bg-white h-10 rounded-full shadow-inner mx-auto max-w-7xl' : 'bg-white/90 backdrop-blur-xl h-12 md:h-14 rounded-2xl shadow-lg shadow-amber-900/10 border border-amber-200/30'}
-                    flex items-center 
-                    px-3 md:px-4
-                    gap-2 md:gap-3
-                    relative
-                    overflow-hidden
-                    cursor-pointer
-                    transition-all duration-300
-                `}>
-                    <Search size={18} className="text-amber-500 z-10 md:w-6 md:h-6" />
+                        w-full mx-auto max-w-7xl
+                        ${isSticky
+                            ? 'h-10 rounded-full shadow-inner'
+                            : 'h-12 md:h-14 rounded-2xl shadow-xl shadow-emerald-900/5 border border-white/40 bg-white/95 backdrop-blur-md'}
+                        flex items-center 
+                        px-3 md:px-4
+                        gap-2 md:gap-3
+                        relative
+                        overflow-hidden
+                        cursor-pointer
+                        transition-all duration-300
+                    `}
+                >
+                    <Search size={18} style={{ color: accentColor }} className="z-10 md:w-6 md:h-6" />
 
-                    <div className="flex-1 h-full flex items-center bg-transparent outline-none text-surface font-medium z-20 relative text-xs md:text-sm">
+                    <div className="flex-1 h-full flex items-center bg-transparent outline-none font-medium z-20 relative text-xs md:text-sm" style={{ color: accentColor }}>
                         {/* Input simulated via div/text */}
                     </div>
 
@@ -143,10 +154,10 @@ const HeroSection = () => {
                         <AnimatePresence mode="wait">
                             <motion.span
                                 key={placeholderIndex}
-                                initial={{ y: 20, opacity: 0 }}
+                                initial={{ y: 15, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
-                                exit={{ y: -20, opacity: 0 }}
-                                transition={{ duration: 0.5, ease: "easeOut" }}
+                                exit={{ y: -15, opacity: 0 }}
+                                transition={{ duration: 0.4, ease: "easeOut" }}
                                 className="text-gray-400 font-normal text-xs md:text-sm absolute w-full truncate"
                             >
                                 {placeholders[placeholderIndex]}
@@ -155,19 +166,19 @@ const HeroSection = () => {
                     </div>
 
                     {/* Filter Icon */}
-                    <button className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 transition-colors z-10">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <button className="p-1.5 rounded-lg bg-gray-50/50 hover:bg-white transition-colors z-10">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="4" y1="6" x2="20" y2="6"></line>
                             <line x1="4" y1="12" x2="20" y2="12"></line>
                             <line x1="4" y1="18" x2="12" y2="18"></line>
                         </svg>
                     </button>
-                </div>
-            </div>
+                </motion.div>
+            </motion.div>
 
             {/* Placeholder Spacer only when sticky to prevent content jump */}
             {isSticky && (
-                <div className="h-11 w-full md:h-14"></div>
+                <div className="h-16 w-full md:h-20"></div>
             )}
 
             <MobileMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />

@@ -396,11 +396,11 @@ const BookingCheckoutPage = () => {
               <h3 className="font-bold text-gray-900 mb-4 text-sm">Payment Method</h3>
               <div className="space-y-3">
                 {/* Option 1: Pay at Move-In / Pay at Hotel */}
-                <label className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'pay_at_hotel' ? 'border-black bg-gray-50' : 'border-gray-100 hover:border-gray-200'}`}>
+                <label className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'pay_at_hotel' ? 'border-surface bg-surface/5' : 'border-gray-100 hover:border-gray-200'}`}>
                   <input
                     type="radio"
                     name="payment"
-                    className="mt-1"
+                    className="mt-1 accent-surface"
                     checked={paymentMethod === 'pay_at_hotel'}
                     onChange={() => {
                       setPaymentMethod('pay_at_hotel');
@@ -409,10 +409,10 @@ const BookingCheckoutPage = () => {
                   />
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-gray-900 text-sm">
+                      <span className={`font-bold text-sm ${paymentMethod === 'pay_at_hotel' ? 'text-surface' : 'text-gray-900'}`}>
                         {isPgOrHostel ? 'Pay at Move-In' : 'Pay at Hotel'}
                       </span>
-                      <Building size={16} className="text-gray-500" />
+                      <Building size={16} className={`${paymentMethod === 'pay_at_hotel' ? 'text-surface' : 'text-gray-500'}`} />
                     </div>
                     <p className="text-xs text-gray-500 leading-relaxed">
                       {isPgOrHostel
@@ -423,19 +423,19 @@ const BookingCheckoutPage = () => {
                 </label>
 
                 {/* Option 2: Pay Now */}
-                <label className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'online' ? 'border-black bg-gray-50' : 'border-gray-100 hover:border-gray-200'}`}>
+                <label className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'online' ? 'border-surface bg-surface/5' : 'border-gray-100 hover:border-gray-200'}`}>
                   <input
                     type="radio"
                     name="payment"
-                    className="mt-1"
+                    className="mt-1 accent-surface"
                     checked={paymentMethod === 'online'}
                     onChange={() => setPaymentMethod('online')}
                   />
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-gray-900 text-sm">Pay Now</span>
+                      <span className={`font-bold text-sm ${paymentMethod === 'online' ? 'text-surface' : 'text-gray-900'}`}>Pay Now</span>
                       <div className="flex gap-2">
-                        <CreditCard size={16} className="text-gray-500" />
+                        <CreditCard size={16} className={`${paymentMethod === 'online' ? 'text-surface' : 'text-gray-500'}`} />
                       </div>
                     </div>
                     <p className="text-xs text-gray-500 leading-relaxed mb-2">
@@ -462,7 +462,7 @@ const BookingCheckoutPage = () => {
           <button
             onClick={handleConfirmBooking}
             disabled={loading}
-            className="w-full bg-black text-white font-bold text-lg py-4 rounded-xl shadow-lg hover:bg-gray-900 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-surface text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-surface/20 hover:bg-emerald-700 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <span className="animate-pulse">Processing...</span>

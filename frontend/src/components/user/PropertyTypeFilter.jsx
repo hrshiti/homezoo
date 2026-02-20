@@ -11,7 +11,8 @@ const ALL_OPTION = {
   isDynamic: false
 };
 
-const PropertyTypeFilter = ({ selectedType, onSelectType }) => {
+const PropertyTypeFilter = ({ selectedType, onSelectType, theme }) => {
+  const accentColor = theme?.accent || '#059669';
   const STATIC_TYPES = [];
 
   const [allTypes, setAllTypes] = useState([ALL_OPTION, ...STATIC_TYPES]);
@@ -110,7 +111,7 @@ const PropertyTypeFilter = ({ selectedType, onSelectType }) => {
 
   return (
     <motion.div
-      className="relative w-full border-b border-white/10 bg-transparent"
+      className="relative w-full border-b border-gray-100 bg-white"
     >
       {/* Web: centered & larger; Mobile: scrollable as before */}
       <div className="flex gap-3 overflow-x-auto px-5 py-4 no-scrollbar relative max-w-7xl mx-auto items-center justify-center md:justify-center md:flex-wrap md:gap-4 md:overflow-visible">
@@ -135,32 +136,37 @@ const PropertyTypeFilter = ({ selectedType, onSelectType }) => {
             <button
               key={type.id || 'all'}
               onClick={() => onSelectType(type.id, type.label)}
-              className="relative flex flex-col items-center gap-1.5 min-w-[68px] md:min-w-[88px] group outline-none z-10 shrink-0"
+              className="flex flex-col items-center gap-2 min-w-[70px] outline-none group shrink-0"
             >
-              {/* Highlight Pill Animation */}
-              {isSelected && (
-                <motion.div
-                  layoutId="activeTabPill"
-                  className="absolute -inset-x-2 -inset-y-2 md:-inset-x-3 md:-inset-y-3 bg-gradient-to-br from-white to-amber-50 backdrop-blur-sm rounded-2xl shadow-lg shadow-amber-500/15 border border-amber-200/40 z-[-1]"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                />
-              )}
-
-              <div className={`
-                w-11 h-11 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center
-                transition-all duration-300 group-active:scale-90
-                ${isSelected
-                  ? 'text-amber-600'
-                  : 'text-white/70 group-hover:text-white'
-                }
-              `}>
-                <Icon className="w-[22px] h-[22px] md:w-8 md:h-8" strokeWidth={isSelected ? 2.5 : 1.8} />
+              <div className="relative">
+                {isSelected && (
+                  <motion.div
+                    layoutId="activeTabCircle"
+                    className="absolute inset-0 rounded-2xl"
+                    style={{ backgroundColor: `${accentColor}20` }}
+                    transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
+                  />
+                )}
+                <div
+                  className={`
+                    w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-all duration-300
+                    ${!isSelected ? 'bg-gray-50 border border-gray-100 group-hover:bg-gray-100' : ''}
+                  `}
+                >
+                  <Icon
+                    className="w-5 h-5 md:w-6 md:h-6 transition-colors"
+                    style={{ color: isSelected ? accentColor : '#6B7280' }}
+                    strokeWidth={isSelected ? 2.5 : 2}
+                  />
+                </div>
               </div>
 
-              <span className={`
-                text-[10px] md:text-sm font-bold tracking-tight transition-colors whitespace-nowrap
-                ${isSelected ? 'text-amber-700' : 'text-white/80 group-hover:text-white'}
-              `}>
+              <span
+                className={`
+                  text-[11px] md:text-xs font-bold tracking-wide transition-colors whitespace-nowrap
+                `}
+                style={{ color: isSelected ? accentColor : '#6B7280' }}
+              >
                 {type.label}
               </span>
             </button>

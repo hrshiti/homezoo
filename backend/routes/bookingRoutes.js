@@ -10,7 +10,8 @@ import {
   markBookingNoShow,
   markCheckIn,
   markCheckOut,
-  getBookingDetail
+  getBookingDetail,
+  updateInquiryStatus
 } from '../controllers/bookingController.js';
 
 const router = express.Router();
@@ -24,6 +25,7 @@ router.put('/:id/mark-paid', protect, authorizedRoles('partner', 'admin'), markB
 router.put('/:id/no-show', protect, authorizedRoles('partner', 'admin'), markBookingNoShow);
 router.put('/:id/check-in', protect, authorizedRoles('partner', 'admin'), markCheckIn);
 router.put('/:id/check-out', protect, authorizedRoles('partner', 'admin'), markCheckOut);
+router.put('/:id/inquiry-status', protect, authorizedRoles('partner', 'admin'), updateInquiryStatus);
 router.post('/:id/cancel', protect, cancelBooking);
 
 export default router;

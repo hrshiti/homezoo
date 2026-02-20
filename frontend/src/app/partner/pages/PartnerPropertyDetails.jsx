@@ -108,7 +108,14 @@ const PartnerPropertyDetails = () => {
       icon: FileText,
       desc: `${property?.documents?.length || 0} Files`
     },
-  ];
+  ].filter(section => {
+    // Hide 'Nearby' for PG/Hostel properties as requested
+    if (section.id === 'nearby') {
+      const pType = property?.propertyType?.toLowerCase();
+      return !['pg', 'hostel', 'pg/co-living', 'co-living'].includes(pType);
+    }
+    return true;
+  });
 
   if (loading) {
     return (

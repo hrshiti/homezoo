@@ -87,6 +87,17 @@ const PartnerBookingDetail = () => {
     }
   };
 
+  const handleUpdateInquiry = async (status) => {
+    const msg = prompt(`Any message/note for the user about status "${status}"?`, "");
+    try {
+      await bookingService.updateInquiryStatus(id, status, msg);
+      toast.success(`Inquiry marked as ${status}`);
+      fetchBooking();
+    } catch (error) {
+      toast.error(error.message || "Update Failed");
+    }
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div></div>;
   if (!booking) return null;
 
@@ -94,11 +105,32 @@ const PartnerBookingDetail = () => {
   const property = booking.propertyId || {};
   const room = booking.roomTypeId || {};
 
+  const isInquiry = booking.isInquiry === true;
   const isPayAtHotel = booking.paymentStatus !== 'paid';
-  const canMarkPaid = isPayAtHotel && ['confirmed', 'checked_in'].includes(booking.bookingStatus);
-  const canMarkNoShow = ['confirmed'].includes(booking.bookingStatus);
-  const canCheckIn = booking.bookingStatus === 'confirmed';
-  const canCheckOut = booking.bookingStatus === 'checked_in';
+  const canMarkPaid = !isInquiry && isPayAtHotel && ['confirmed', 'checked_in'].includes(booking.bookingStatus);
+  const canMarkNoShow = !isInquiry && ['confirmed'].includes(booking.bookingStatus);
+  const canCheckIn = !isInquiry && booking.bookingStatus === 'confirmed';
+  const canCheckOut = !isInquiry && booking.bookingStatus === 'checked_in';
+
+  // Inquiry Specifics
+  const pType = (property?.propertyType || '').toLowerCase();
+  const isPG = ['pg', 'hostel'].includes(pType);
+  const isRent = pType === 'rent';
+  const isBuyPlot = ['buy', 'plot'].includes(pType);
+
+  const checkInLabel = isPG || isRent ? 'Move-in' : (isBuyPlot ? 'Preferred Date' : 'Check-in');
+  const checkOutLabel = isPG || isRent ? 'Move-out' : 'Check-out';
+  const durationLabel = isPG || isRent ? (booking.totalNights >= 30 ? 'Months' : 'Days') : 'Nights';
+  // For PG, 'totalNights' usually represents 'totalMonths' if stored that way, 
+  // OR we need to convert. Assuming backend stores 'nights' for all, we might show 'Days' or 'Months' based on usage.
+  // If backend purely stores 'nights' (e.g. 30), for PG we might want to say '1 Month' if it's exactly 30?
+  // simpler for now: just use 'Month' if the logic implies it, but be careful.
+  // Let's stick to safe labels: 
+  // If isPG, show "Duration" instead of "Nights" to be generic if we can't be sure of the unit?
+  // Or better, per user request: "termology ko thik karo".
+  // Let's assume standard booking for PG is often 30 days = 1 Month. 
+  // We will use "Duration" and show "X Days/Months".
+
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
@@ -115,7 +147,7 @@ const PartnerBookingDetail = () => {
         {/* Status Card - Compact */}
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">Booking ID</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">{isInquiry ? 'Inquiry ID' : 'Booking ID'}</span>
             <p className="text-sm font-black text-gray-900 break-all">#{booking.bookingId || booking._id}</p>
           </div>
           <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${booking.bookingStatus === 'confirmed' ? 'bg-green-50 text-green-700 border-green-100' :
@@ -123,7 +155,25 @@ const PartnerBookingDetail = () => {
               booking.bookingStatus === 'no_show' ? 'bg-gray-100 text-gray-600 border-gray-200' :
                 'bg-yellow-50 text-yellow-700 border-yellow-100'
             }`}>
-            {booking.bookingStatus.replace('_', ' ')}
+            {isInquiry ? booking.inquiryMetadata?.status?.replace('_', ' ') : booking.bookingStatus.replace('_', ' ')}
+          </div>
+        </div>
+
+        {/* Property Info */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4">
+          <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
+            {property.images?.[0] ? <img src={property.images[0]} alt="property" className="w-full h-full object-cover" /> : <MapPin size={24} className="m-5 text-gray-300" />}
+          </div>
+          <div>
+            <h2 className="font-black text-[#003836] text-base leading-tight uppercase">{property.propertyName || 'Property Name'}</h2>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="px-2 py-0.5 bg-gray-100 text-[9px] font-bold rounded text-gray-500 uppercase">{pType}</span>
+              <p className="text-xs text-gray-400 font-medium truncate max-w-[150px]">
+                {typeof property.address === 'object'
+                  ? `${property.address.city || ''}${property.address.city && property.address.area ? ', ' : ''}${property.address.area || ''}`
+                  : (property.address || 'Location')}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -171,50 +221,64 @@ const PartnerBookingDetail = () => {
         {/* Stay Info - Compact */}
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <h3 className="font-bold text-gray-900 mb-3 text-sm flex items-center gap-2">
-            <Calendar size={16} className="text-gray-400" /> Stay Details
+            <Calendar size={16} className="text-gray-400" /> {isInquiry ? 'Inquiry Details' : (isPG || isRent ? 'Tenancy Details' : 'Stay Details')}
           </h3>
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div className="p-2.5 bg-gray-50 rounded-xl">
-              <p className="text-[9px] text-gray-400 font-bold uppercase mb-0.5">Check-in</p>
-              <p className="font-bold text-gray-900 text-sm">{new Date(booking.checkInDate).toLocaleDateString()}</p>
+              <p className="text-[9px] text-gray-400 font-bold uppercase mb-0.5">{checkInLabel}</p>
+              <p className="font-bold text-gray-900 text-sm">{booking.checkInDate || booking.inquiryMetadata?.preferredDate ? new Date(booking.checkInDate || booking.inquiryMetadata?.preferredDate).toLocaleDateString() : 'N/A'}</p>
             </div>
-            <div className="p-2.5 bg-gray-50 rounded-xl">
-              <p className="text-[9px] text-gray-400 font-bold uppercase mb-0.5">Check-out</p>
-              <p className="font-bold text-gray-900 text-sm">{new Date(booking.checkOutDate).toLocaleDateString()}</p>
-            </div>
+            {!isBuyPlot && (
+              <div className="p-2.5 bg-gray-50 rounded-xl">
+                <p className="text-[9px] text-gray-400 font-bold uppercase mb-0.5">{checkOutLabel}</p>
+                <p className="font-bold text-gray-900 text-sm">{booking.checkOutDate ? new Date(booking.checkOutDate).toLocaleDateString() : 'N/A'}</p>
+              </div>
+            )}
           </div>
-          <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl">
-            <div>
-              <p className="text-[9px] text-gray-400 font-bold uppercase">Room Type</p>
-              <p className="font-bold text-gray-900 text-sm">{room.name || room.type || 'Standard Room'}</p>
+          {!isBuyPlot && (
+            <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-xl">
+              <div>
+                <p className="text-[9px] text-gray-400 font-bold uppercase">{isPG ? 'Selection' : 'Room Type'}</p>
+                <p className="font-bold text-gray-900 text-sm">{room.name || room.type || 'Standard'}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-900 font-bold">
+                  {booking.bookingUnit === 'entire' ? '1 Unit' : booking.bookingUnit === 'bed' ? '1 Bed' : '1 Room'}
+                </p>
+                <p className="text-[10px] text-gray-500 font-medium">
+                  {booking.totalNights} {durationLabel}
+                </p>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-xs text-gray-900 font-bold">
-                {Math.round(booking.baseAmount / (booking.pricePerNight * booking.totalNights)) || 1} {booking.bookingUnit === 'entire' ? 'Unit' : booking.bookingUnit === 'bed' ? 'Bed' : 'Room'}{(Math.round(booking.baseAmount / (booking.pricePerNight * booking.totalNights)) || 1) > 1 ? 's' : ''}
-              </p>
-              <p className="text-[10px] text-gray-500 font-medium">{booking.totalNights} Night{booking.totalNights > 1 ? 's' : ''}</p>
+          )}
+          {isInquiry && booking.inquiryMetadata?.message && (
+            <div className="mt-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
+              <p className="text-[9px] text-blue-400 font-bold uppercase mb-1">User Message</p>
+              <p className="text-sm text-blue-900 font-medium italic">"{booking.inquiryMetadata.message}"</p>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Payment Info - Compact */}
+        {/* Payment/Price Info - Compact */}
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <h3 className="font-bold text-gray-900 mb-3 text-sm flex items-center gap-2">
-            <CreditCard size={16} className="text-gray-400" /> Payment & Payout
+            <CreditCard size={16} className="text-gray-400" /> {isInquiry ? 'Financial Details' : 'Payment & Payout'}
           </h3>
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-gray-600">Total Amount (Collect)</span>
-              <span className="font-bold text-gray-900 text-base">₹{booking.totalAmount}</span>
+              <span className="text-gray-600">{isInquiry ? 'Expected Price / Budget' : 'Total Amount (Collect)'}</span>
+              <span className="font-bold text-gray-900 text-base">₹{isInquiry ? booking.inquiryMetadata?.budget : booking.totalAmount}</span>
             </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-gray-600">Partner Payout (Earnings)</span>
-              <span className="font-bold text-green-700 text-sm">₹{booking.partnerPayout}</span>
-            </div>
+            {!isInquiry && (
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-gray-600">Partner Payout (Earnings)</span>
+                <span className="font-bold text-green-700 text-sm">₹{booking.partnerPayout}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center text-xs pt-1">
               <span className="text-gray-600">Status</span>
-              <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${booking.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                {booking.paymentStatus === 'paid' ? 'PAID' : 'PAY AT HOTEL'}
+              <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase ${booking.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                {isInquiry ? 'Lead' : (booking.paymentStatus === 'paid' ? 'PAID' : 'PAY AT HOTEL')}
               </span>
             </div>
           </div>
@@ -225,12 +289,41 @@ const PartnerBookingDetail = () => {
 
       {/* Actions Grid */}
       <div className="grid grid-cols-2 gap-3 pt-2">
+        {isInquiry && (
+          <>
+            <button
+              onClick={() => handleUpdateInquiry('scheduled')}
+              className="bg-purple-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 col-span-1"
+            >
+              <Calendar size={18} /> Schedule Visit
+            </button>
+            <button
+              onClick={() => handleUpdateInquiry('negotiating')}
+              className="bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 col-span-1"
+            >
+              <Clock size={18} /> Negotiating
+            </button>
+            <button
+              onClick={() => handleUpdateInquiry(isBuyPlot ? 'sold' : 'rented')}
+              className="bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 col-span-2"
+            >
+              <CheckCircle size={20} /> Mark as {isBuyPlot ? 'Sold' : 'Rented'}
+            </button>
+            <button
+              onClick={() => handleUpdateInquiry('dropped')}
+              className="bg-white border border-gray-200 text-red-600 font-bold py-4 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2 col-span-2"
+            >
+              <XCircle size={20} /> Drop Lead
+            </button>
+          </>
+        )}
+
         {canCheckIn && (
           <button
             onClick={handleCheckIn}
             className="col-span-2 bg-black text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
           >
-            <LogIn size={20} /> Check In Guest
+            <LogIn size={20} /> {checkInLabel} Guest
           </button>
         )}
 
@@ -239,7 +332,7 @@ const PartnerBookingDetail = () => {
             onClick={handleCheckOut}
             className="col-span-2 bg-black text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
           >
-            <LogOut size={20} /> Check Out Guest
+            <LogOut size={20} /> {checkOutLabel} Guest
           </button>
         )}
 
@@ -248,7 +341,7 @@ const PartnerBookingDetail = () => {
             onClick={handleMarkPaid}
             className={`bg-green-600 text-white font-bold py-3 rounded-xl shadow-green-200 active:scale-95 transition-transform flex items-center justify-center gap-2 ${canCheckIn || canCheckOut ? 'col-span-1' : 'col-span-2'}`}
           >
-            <CheckCircle size={18} /> Mark Payment
+            <CheckCircle size={18} /> Mark Paid
           </button>
         )}
 

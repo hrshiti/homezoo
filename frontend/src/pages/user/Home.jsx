@@ -6,68 +6,72 @@ import PropertyTypeFilter from '../../components/user/PropertyTypeFilter';
 import PropertyFeed from '../../components/user/PropertyFeed';
 import { categoryService } from '../../services/categoryService';
 
-// Category displayName → dark hero background only (no images) + page background
+// Category Theme Map - Professional palettes inspired by Housing.com
 const THEME_MAP = {
     Hotel: {
-        darkBg: 'linear-gradient(160deg, #0f172a 0%, #1e3a5f 50%, #1e40af 100%)',
-        pageBg: '#eff6ff'
-    },
-    Villa: {
-        darkBg: 'linear-gradient(160deg, #052e16 0%, #14532d 50%, #166534 100%)',
-        pageBg: '#f0fdf4'
-    },
-    Resort: {
-        darkBg: 'linear-gradient(160deg, #3b0764 0%, #581c87 50%, #6b21a8 100%)',
-        pageBg: '#faf5ff'
-    },
-    Homestay: {
-        darkBg: 'linear-gradient(160deg, #431407 0%, #78350f 50%, #92400e 100%)',
-        pageBg: '#fffbeb'
-    },
-    Hostel: {
-        darkBg: 'linear-gradient(160deg, #0c4a6e 0%, #0e7490 50%, #0891b2 100%)',
-        pageBg: '#ecfeff'
-    },
-    PG: {
-        darkBg: 'linear-gradient(160deg, #450a0a 0%, #7f1d1d 50%, #991b1b 100%)',
-        pageBg: '#fef2f2'
-    },
-    'PG/Co-living': {
-        darkBg: 'linear-gradient(160deg, #450a0a 0%, #7f1d1d 50%, #991b1b 100%)',
-        pageBg: '#fef2f2'
+        darkBg: 'linear-gradient(135deg, #064E3B 0%, #065F46 100%)', // Emerald
+        pageBg: '#F8FAFC',
+        accent: '#10B981'
     },
     'PG/Co-Living': {
-        darkBg: 'linear-gradient(160deg, #450a0a 0%, #7f1d1d 50%, #991b1b 100%)',
-        pageBg: '#fef2f2'
-    },
-    Tent: {
-        darkBg: 'linear-gradient(160deg, #431407 0%, #9a3412 50%, #c2410c 100%)',
-        pageBg: '#fff7ed'
-    },
-    Plot: {
-        darkBg: 'linear-gradient(160deg, #431407 0%, #9a3412 50%, #c2410c 100%)',
-        pageBg: '#fff7ed'
-    },
-    Plots: {
-        darkBg: 'linear-gradient(160deg, #431407 0%, #9a3412 50%, #c2410c 100%)',
-        pageBg: '#fff7ed'
-    },
-    Buy: {
-        darkBg: 'linear-gradient(160deg, #0f172a 0%, #1e3a5f 50%, #1d4ed8 100%)',
-        pageBg: '#eff6ff'
+        darkBg: 'linear-gradient(135deg, #881337 0%, #9F1239 100%)', // Rose
+        pageBg: '#FFF1F2',
+        accent: '#E11D48'
     },
     Rent: {
-        darkBg: 'linear-gradient(160deg, #052e16 0%, #14532d 50%, #15803d 100%)',
-        pageBg: '#f0fdf4'
+        darkBg: 'linear-gradient(135deg, #4C1D95 0%, #5B21B6 100%)', // Violet
+        pageBg: '#F5F3FF',
+        accent: '#8B5CF6'
+    },
+    Buy: {
+        darkBg: 'linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%)', // Blue
+        pageBg: '#EFF6FF',
+        accent: '#3B82F6'
+    },
+    Plot: {
+        darkBg: 'linear-gradient(135deg, #78350F 0%, #92400E 100%)', // Amber
+        pageBg: '#FFFBEB',
+        accent: '#F59E0B'
     },
     default: {
-        darkBg: 'linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
-        pageBg: '#f8fafc'
+        darkBg: 'linear-gradient(135deg, #064E3B 0%, #065F46 100%)', // Emerald
+        pageBg: '#F8FAFC',
+        accent: '#10B981'
     }
 };
 
 const Home = () => {
     const [selectedType, setSelectedType] = useState({ id: null, label: 'All' });
+    const [sectionIds, setSectionIds] = useState({ pg: null, rent: null, buy: null, plot: null });
+
+    // Fetch Category IDs for the homepage sections
+    useEffect(() => {
+        const fetchIds = async () => {
+            try {
+                const categories = await categoryService.getActiveCategories();
+                const findCategoryIds = (names) => {
+                    const searchNames = Array.isArray(names) ? names : [names];
+                    const found = categories.filter(c =>
+                        searchNames.some(n =>
+                            (c.displayName || '').toLowerCase() === n.toLowerCase() ||
+                            (c.name || '').toLowerCase() === n.toLowerCase()
+                        )
+                    );
+                    return found.map(c => c._id).length > 0 ? found.map(c => c._id).join(',') : null;
+                };
+
+                setSectionIds({
+                    pg: findCategoryIds(['hostel', 'pg', 'pg/co-living', 'co-living', 'pg/co-livinig']),
+                    rent: findCategoryIds('Rent'),
+                    buy: findCategoryIds('Buy'),
+                    plot: findCategoryIds(['Plot', 'Plots'])
+                });
+            } catch (err) {
+                console.error("Failed to fetch section IDs", err);
+            }
+        };
+        fetchIds();
+    }, []);
 
     const activeTheme = useMemo(() => {
         if (!selectedType.label || selectedType.label === 'All' || !selectedType.id) return THEME_MAP.default;
@@ -79,6 +83,36 @@ const Home = () => {
     };
 
     const pageBg = activeTheme.pageBg || '#f8fafc';
+
+    // Section Component
+    const HomeSection = ({ title, typeId, subtitle }) => (
+        <div className="py-4 border-b border-gray-100 last:border-0 relative">
+            <div className="flex justify-between items-end px-5 md:px-0 mb-2">
+                <div>
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-900">{title}</h2>
+                    {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+                </div>
+                <button
+                    onClick={() => {
+                        const labelMap = {
+                            [sectionIds.pg]: 'PG/Co-Living',
+                            [sectionIds.rent]: 'Rent',
+                            [sectionIds.buy]: 'Buy',
+                            [sectionIds.plot]: 'Plot'
+                        };
+                        handleTypeSelect(typeId, labelMap[typeId] || 'All');
+                        // Scroll to top or handle navigation if needed, 
+                        // dependent on standard behavior (here state update triggers re-render to grid view)
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="text-sm font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
+                >
+                    View All
+                </button>
+            </div>
+            <PropertyFeed selectedType={typeId} viewMode="carousel" limit={8} />
+        </div>
+    );
 
     return (
         <main className="min-h-screen pb-24 transition-colors duration-700" style={{ backgroundColor: pageBg }}>
@@ -95,7 +129,7 @@ const Home = () => {
 
                 {/* Content on top */}
                 <div className="relative z-[2] flex flex-col min-h-[380px] md:min-h-[340px]">
-                    <HeroSection />
+                    <HeroSection theme={activeTheme} />
 
                     {/* Small gap between search bar and category (mobile); minimal on desktop */}
                     <div className="pt-2 flex-shrink-0 md:pt-1 md:min-h-0" />
@@ -105,6 +139,7 @@ const Home = () => {
                         <PropertyTypeFilter
                             selectedType={selectedType.id}
                             onSelectType={handleTypeSelect}
+                            theme={activeTheme}
                         />
                     </div>
                 </div>
@@ -113,7 +148,42 @@ const Home = () => {
             <ExclusiveOffers />
 
             <div className="mt-2 max-w-7xl mx-auto">
-                <PropertyFeed selectedType={selectedType.id} />
+                {(!selectedType.id || selectedType.label === 'All') ? (
+                    // Show Categorized Sections when "All" is selected
+                    <div className="flex flex-col gap-2">
+                        {sectionIds.pg && (
+                            <HomeSection
+                                title="Scholar & Professional Stays"
+                                subtitle="Top rated PGs and Hostels near you"
+                                typeId={sectionIds.pg}
+                            />
+                        )}
+                        {sectionIds.rent && (
+                            <HomeSection
+                                title="Properties for Rent"
+                                subtitle="Apartments, Homes, and Villas for Rent"
+                                typeId={sectionIds.rent}
+                            />
+                        )}
+                        {sectionIds.buy && (
+                            <HomeSection
+                                title="Dream Homes for Sale"
+                                subtitle="Buy your perfect home today"
+                                typeId={sectionIds.buy}
+                            />
+                        )}
+                        {sectionIds.plot && (
+                            <HomeSection
+                                title="Premium Plots & Land"
+                                subtitle="Invest in the best locations"
+                                typeId={sectionIds.plot}
+                            />
+                        )}
+                    </div>
+                ) : (
+                    // Show Filtered Grid when a specific category is selected
+                    <PropertyFeed selectedType={selectedType.id} viewMode="grid" />
+                )}
             </div>
         </main>
     );

@@ -2,17 +2,17 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #FEF3C7;
-  /* Warm amber cream background */
+  --color-background: #F8FAFC;
+  /* Clean slate-50 background */
 
-  --color-surface: #B45309;
-  /* Amber 700 - Primary brand color */
-  --color-accent: #F59E0B;
-  /* Amber 500 - Accent highlights */
-  --color-textLight: #FFFBEB;
-  /* Warm light text */
-  --color-textDark: #78350F;
-  /* Amber 900 - Dark warm text */
+  --color-surface: #059669;
+  /* Emerald 600 - Primary brand color */
+  --color-accent: #10B981;
+  /* Emerald 500 - Accent highlights */
+  --color-textLight: #F0FDF4;
+  /* Very light emerald text */
+  --color-textDark: #064E3B;
+  /* Emerald 900 - Dark professional text */
 
   --color-honey: #F59E0B;
   --color-cardWhite: #FFFFFF;
@@ -22,17 +22,13 @@
   --radius-xl: 16px;
   --radius-2xl: 20px;
 
-  /* Hotel Partner Theme - Updated to match amber branding */
+  /* Professional Emerald Theme */
   --color-partner-bg: #FFFFFF;
-  --color-partner-text-primary: #B45309;
-  /* var(--color-surface) */
-  --color-partner-text-secondary: #78350F;
-  /* var(--color-textDark) */
-  --color-partner-btn: #B45309;
-  /* var(--color-surface) */
-  --color-partner-card: #FFFBEB;
-  --color-partner-border: #FDE68A;
-  /* Amber 200 border */
+  --color-partner-text-primary: #059669;
+  --color-partner-text-secondary: #064E3B;
+  --color-partner-btn: #059669;
+  --color-partner-card: #F0FDF4;
+  --color-partner-border: #BBF7D0;
 }
 
 @layer base {
@@ -42,7 +38,7 @@
        Clean Light Gray/White as per "Light Theme" preference.
        The previous teal gradient was rejected.
     */
-    @apply bg-slate-50 text-textDark font-sans min-h-screen selection:bg-amber-100;
+    @apply bg-slate-50 text-textDark font-sans min-h-screen selection:bg-emerald-100;
 
     /* Prevent pull-to-refresh and overscroll in some containers if needed */
     /* overscroll-behavior-y: none; */
@@ -85,7 +81,7 @@ body:has(#hotel-root) {
 }
 
 .input {
-  @apply w-full px-4 py-3 rounded-xl border-2 border-gray-400 outline-none transition-all placeholder:text-gray-400 focus:border-[#B45309] focus:ring-4 focus:ring-[#B45309]/10 bg-white text-[#78350F] font-medium shadow-sm hover:border-gray-500;
+  @apply w-full px-4 py-3 rounded-xl border-2 border-gray-200 outline-none transition-all placeholder:text-gray-400 focus:border-[var(--color-surface)] focus:ring-4 focus:ring-[var(--color-surface)]/10 bg-white text-gray-900 font-medium shadow-sm hover:border-emerald-300;
 }
 
 @media print {

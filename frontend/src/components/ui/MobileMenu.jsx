@@ -159,9 +159,9 @@ const MobileMenu = ({ isOpen, onClose }) => {
                         <div className="flex items-center justify-between p-5 pb-2">
                             <div className="flex flex-col items-start leading-none">
                                 <span className="text-2xl font-black tracking-tighter text-[#111827] flex items-center gap-0.5">
-                                    HOOM<span className="text-amber-600">ZO</span>
+                                    HOOM<span className="text-emerald-600">ZO</span>
                                 </span>
-                                <div className="h-0.5 w-6 bg-amber-500 rounded-full mt-0.5"></div>
+                                <div className="h-0.5 w-6 bg-emerald-500 rounded-full mt-0.5"></div>
                             </div>
                             <button onClick={onClose} className="p-2 rounded-full bg-gray-50 hover:bg-gray-100 transition border border-gray-100">
                                 <X size={20} className="text-gray-500" />
@@ -170,7 +170,7 @@ const MobileMenu = ({ isOpen, onClose }) => {
 
                         <div className="px-5 mb-4">
                             {user ? (
-                                <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-2xl p-4 text-white shadow-lg relative overflow-hidden">
+                                <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl p-4 text-white shadow-lg shadow-emerald-900/20 relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
 
                                     <div className="flex items-start justify-between relative z-10">

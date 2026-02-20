@@ -11,17 +11,33 @@ import PartnerHeader from '../components/PartnerHeader';
 const BookingCard = ({ booking }) => {
     const navigate = useNavigate();
 
+    // Property Type helpers
+    const pType = (booking.propertyType || '').toLowerCase();
+    const isPG = ['pg', 'hostel'].includes(pType);
+    const isRent = pType === 'rent';
+    const isBuyPlot = ['buy', 'plot'].includes(pType);
+    const isInquiry = booking.isInquiry === true;
+
     // Status Logic
     const rawStatus = (booking.bookingStatus || booking.status || 'pending').toLowerCase().trim();
+    const inqStatus = (booking.inquiryMetadata?.status || 'new').toLowerCase();
 
     const getStatusStyle = (s) => {
-        if (s === 'confirmed') return { color: 'text-blue-600 bg-blue-50 border-blue-100', label: 'Confirmed' };
-        if (s === 'checked_in') return { color: 'text-purple-600 bg-purple-50 border-purple-100', label: 'In-House' };
+        if (isInquiry) {
+            if (inqStatus === 'new') return { color: 'text-blue-600 bg-blue-50 border-blue-100', label: 'New Inquiry' };
+            if (inqStatus === 'scheduled') return { color: 'text-purple-600 bg-purple-50 border-purple-100', label: 'Scheduled' };
+            if (inqStatus === 'negotiating') return { color: 'text-orange-600 bg-orange-50 border-orange-100', label: 'Negotiating' };
+            if (inqStatus === 'sold' || inqStatus === 'rented') return { color: 'text-emerald-600 bg-emerald-50 border-emerald-100', label: inqStatus.toUpperCase() };
+            return { color: 'text-gray-500 bg-gray-50 border-gray-200', label: inqStatus.toUpperCase() };
+        }
+
+        if (s === 'confirmed') return { color: 'text-blue-600 bg-blue-50 border-blue-100', label: isPG ? 'Booked' : 'Confirmed' };
+        if (s === 'checked_in') return { color: 'text-purple-600 bg-purple-50 border-purple-100', label: isPG || isRent ? 'Active Tenant' : 'In-House' };
         if (s === 'checked_out' || s === 'completed') return { color: 'text-emerald-600 bg-emerald-50 border-emerald-100', label: 'Completed' };
         if (s === 'cancelled') return { color: 'text-red-500 bg-red-50 border-red-100', label: 'Cancelled' };
         if (s === 'no_show') return { color: 'text-gray-500 bg-gray-100 border-gray-200', label: 'No Show' };
         if (s === 'pending_payment') return { color: 'text-orange-600 bg-orange-50 border-orange-100', label: 'Payment Pending' };
-        // Default
+
         return { color: 'text-yellow-600 bg-yellow-50 border-yellow-100', label: s.replace('_', ' ').toUpperCase() };
     };
 
@@ -44,13 +60,18 @@ const BookingCard = ({ booking }) => {
     };
 
     const guestName = booking.userId?.name || 'Guest User';
-    const checkInDate = formatDate(booking.checkInDate || booking.checkIn);
+    const checkInDate = formatDate(booking.checkInDate || booking.checkIn || booking.inquiryMetadata?.preferredDate);
     const checkOutDate = formatDate(booking.checkOutDate || booking.checkOut);
     const nights = calculateNights(booking.checkInDate || booking.checkIn, booking.checkOutDate || booking.checkOut);
     const guestCount = (booking.guests?.adults || 1) + (booking.guests?.children || 0);
-    const roomsCount = 1;
-    const hotelName = booking.propertyId?.propertyName || booking.propertyId?.name || 'Hotel Property';
-    const bookingId = booking.bookingId || booking._id?.slice(-8).toUpperCase(); // Show bookingId if available
+    const unitsCount = 1;
+    const hotelName = booking.propertyId?.propertyName || booking.propertyId?.name || 'Property';
+    const bookingId = booking.bookingId || booking._id?.slice(-8).toUpperCase();
+
+    // Labels
+    const secondaryLabel = isBuyPlot ? 'Interested' : (isPG || isRent ? 'Tenant' : 'Guest');
+    const durationLabel = isPG || isRent ? (nights >= 30 ? `${Math.round(nights / 30)} Months` : `${nights} Days`) : `${nights} Nights`;
+    const unitLabel = isPG ? 'Bed' : (isBuyPlot || isRent ? 'Unit' : 'Room');
 
     return (
         <div
@@ -60,45 +81,55 @@ const BookingCard = ({ booking }) => {
             {/* Header: ID & Status */}
             <div className="flex justify-between items-start mb-3">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                    ID: {bookingId}
+                    {isInquiry ? 'INQUIRY ID' : 'BOOKING ID'}: {bookingId}
                 </span>
                 <span className={`px-2.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide border ${status.color}`}>
                     {status.label}
                 </span>
             </div>
 
-            {/* Guest & Hotel Info */}
+            {/* Guest & Property Info */}
             <div className="mb-4">
                 <h3 className="text-lg font-black text-[#003836] leading-none mb-1">
                     {guestName}
                 </h3>
-                <p className="text-xs text-gray-400 font-medium">{hotelName}</p>
+                <p className="text-xs text-gray-400 font-medium">{hotelName} • <span className="uppercase">{pType}</span></p>
             </div>
 
             {/* Details Grid */}
             <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs mb-5">
                 <div className="flex items-center gap-2 text-gray-600">
                     <Calendar size={14} className="text-[#004F4D]" />
-                    <span className="font-bold text-gray-700">{checkInDate} - {checkOutDate}</span>
+                    <span className="font-bold text-gray-700">{checkInDate} {!isBuyPlot && ` - ${checkOutDate}`}</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                    <Clock size={14} className="text-[#004F4D]" />
-                    <span className="font-medium">{nights} Nights</span>
-                </div>
+                {!isBuyPlot && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                        <Clock size={14} className="text-[#004F4D]" />
+                        <span className="font-medium">{durationLabel}</span>
+                    </div>
+                )}
+                {isBuyPlot && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                        <Clock size={14} className="text-[#004F4D]" />
+                        <span className="font-medium">Preference: {booking.inquiryMetadata?.preferredDate ? 'Visit Scheduled' : 'General Inquiry'}</span>
+                    </div>
+                )}
                 <div className="flex items-center gap-2 text-gray-600">
                     <User size={14} className="text-[#004F4D]" />
-                    <span className="font-medium">{guestCount} Guests</span>
+                    <span className="font-medium">{isBuyPlot ? '1 Person' : `${guestCount} ${secondaryLabel}s`}</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                    <BedDouble size={14} className="text-[#004F4D]" />
-                    <span className="font-medium">{roomsCount} Room</span>
-                </div>
+                {!isBuyPlot && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                        <BedDouble size={14} className="text-[#004F4D]" />
+                        <span className="font-medium">{unitsCount} {unitLabel}</span>
+                    </div>
+                )}
             </div>
 
-            {/* Earning Section */}
+            {/* Payout/Price Section */}
             <div className="flex items-center justify-between pt-3 border-t border-dashed border-gray-200 mb-4">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Payout</span>
-                <span className="font-black text-[#004F4D] text-lg">₹{booking.partnerPayout?.toLocaleString('en-IN') || 0}</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{isBuyPlot ? 'Budget' : 'Payout'}</span>
+                <span className="font-black text-[#004F4D] text-lg">₹{(isInquiry ? booking.inquiryMetadata?.budget : booking.partnerPayout)?.toLocaleString('en-IN') || 0}</span>
             </div>
 
             {/* Actions */}
@@ -107,7 +138,7 @@ const BookingCard = ({ booking }) => {
                     onClick={(e) => { e.stopPropagation(); navigate(`/hotel/bookings/${booking._id}`); }}
                     className="flex-1 bg-[#004F4D] text-white h-9 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-md active:scale-95 transition-transform hover:bg-[#003f3d]"
                 >
-                    View Details
+                    {isInquiry ? 'View Inquiry' : 'View Details'}
                 </button>
                 {booking.userId?.phone && (
                     <a
@@ -118,12 +149,6 @@ const BookingCard = ({ booking }) => {
                         <Phone size={14} />
                     </a>
                 )}
-                <button
-                    onClick={(e) => { e.stopPropagation(); navigate(`/hotel/bookings/${booking._id}`); }}
-                    className="w-9 h-9 rounded-xl bg-gray-50 text-gray-700 flex items-center justify-center border border-gray-100 hover:bg-gray-100 active:scale-95 transition-transform"
-                >
-                    <ChevronRight size={16} />
-                </button>
             </div>
         </div>
     );
@@ -155,9 +180,9 @@ const PartnerBookings = () => {
     const filteredBookings = bookings;
 
     const tabs = [
-        { id: 'upcoming', label: 'Upcoming' },
-        { id: 'in_house', label: 'In-House' },
-        { id: 'completed', label: 'History' },
+        { id: 'upcoming', label: 'Upcoming / New' },
+        { id: 'in_house', label: 'In-House / Active' },
+        { id: 'completed', label: 'Past / Sold' },
         { id: 'cancelled', label: 'Cancelled' },
     ];
 

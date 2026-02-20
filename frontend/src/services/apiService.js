@@ -216,6 +216,14 @@ export const bookingService = {
       throw error.response?.data || error.message;
     }
   },
+  updateInquiryStatus: async (id, status, message) => {
+    try {
+      const response = await api.put(`/bookings/${id}/inquiry-status`, { status, message });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
   cancel: async (bookingId, reason) => {
     try {
       const response = await api.post(`/bookings/${bookingId}/cancel`, { reason });

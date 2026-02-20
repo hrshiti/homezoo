@@ -36,33 +36,31 @@ const bookingSchema = new mongoose.Schema({
 
   propertyType: {
     type: String,
-    enum: ["villa", "resort", "hotel", "hostel", "pg", "homestay", "tent"],
+    enum: ["villa", "resort", "hotel", "hostel", "pg", "homestay", "tent", "rent", "buy", "plot"],
     required: true
   },
 
   // ROOM / INVENTORY (REQUIRED FOR ALL)
   roomTypeId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "RoomType",
-    required: true
+    ref: "RoomType"
   },
 
   bookingUnit: {
     type: String,
-    enum: ["entire", "room", "bed", "tent"],
-    required: true
+    enum: ["entire", "room", "bed", "tent"]
   },
 
   // STAY DETAILS
-  checkInDate: { type: Date, required: true },
-  checkOutDate: { type: Date, required: true },
-  totalNights: { type: Number, required: true },
+  checkInDate: { type: Date },
+  checkOutDate: { type: Date },
+  totalNights: { type: Number },
 
   guests: guestSchema,
 
   // PRICING (PER NIGHT LOGIC)
-  pricePerNight: { type: Number, required: true },
-  baseAmount: { type: Number, required: true }, // pricePerNight * nights
+  pricePerNight: { type: Number },
+  baseAmount: { type: Number }, // pricePerNight * nights
 
   extraAdultPrice: { type: Number, default: 0 },
   extraChildPrice: { type: Number, default: 0 },
@@ -76,7 +74,7 @@ const bookingSchema = new mongoose.Schema({
   adminCommission: { type: Number, default: 0 },
   partnerPayout: { type: Number, default: 0 },
 
-  totalAmount: { type: Number, required: true },
+  totalAmount: { type: Number },
 
   // PAYMENT
   paymentStatus: {
@@ -98,11 +96,26 @@ const bookingSchema = new mongoose.Schema({
   cancellationReason: String,
   cancelledAt: Date,
 
+  // INQUIRY FLAG
+  isInquiry: { type: Boolean, default: false },
+
   // AUDIT
   createdBy: {
     type: String,
     enum: ["user", "admin"],
     default: "user"
+  },
+
+  // Metadata for different logic
+  inquiryMetadata: {
+    preferredDate: Date,
+    message: String,
+    budget: Number,
+    status: {
+      type: String,
+      enum: ["new", "scheduled", "negotiating", "closed", "sold", "rented", "dropped"],
+      default: "new"
+    }
   }
 
 }, { timestamps: true });

@@ -49,9 +49,9 @@ const ExclusiveOffers = () => {
 
     return (
         <section className="py-2 pl-5 mt-2">
-            <h2 className="text-xl font-bold text-surface mb-4 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-emerald-900 mb-4 flex items-center gap-2">
                 Exclusive offers for you
-                <div className="bg-accent/10 px-2 py-0.5 rounded text-[10px] font-bold text-accent">NEW</div>
+                <div className="bg-emerald-100 px-2 py-0.5 rounded text-[10px] font-bold text-emerald-600">NEW</div>
             </h2>
 
             <div className="flex gap-4 overflow-x-auto pb-4 pr-5 snap-x no-scrollbar">
@@ -84,9 +84,9 @@ const ExclusiveOffers = () => {
                         />
 
                         {/* Dark Gradient Overlay */}
-                        <div className={`absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent flex flex-col justify-center p-5 text-white items-start`}>
+                        <div className={`absolute inset-0 bg-gradient-to-r from-emerald-950/80 via-emerald-900/40 to-transparent flex flex-col justify-center p-5 text-white items-start`}>
                             <div className="flex items-center gap-2 mb-1">
-                                <span className="bg-accent text-[8px] font-black px-1.5 py-0.5 rounded tracking-widest uppercase">
+                                <span className="bg-emerald-500 text-[8px] font-black px-1.5 py-0.5 rounded tracking-widest uppercase shadow-sm">
                                     {offer.discountType === 'percentage' ? `${offer.discountValue}% OFF` : `₹${offer.discountValue} OFF`}
                                 </span>
                             </div>
