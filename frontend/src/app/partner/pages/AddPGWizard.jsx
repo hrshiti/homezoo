@@ -3,7 +3,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { propertyService, hotelService } from '../../../services/apiService';
 import { categoryService } from '../../../services/categoryService';
 // Compression removed - Cloudinary handles optimization
-import { CheckCircle, FileText, Home, Image, Bed, MapPin, Search, Plus, Trash2, ChevronLeft, ChevronRight, Upload, X, ArrowLeft, ArrowRight, Wifi, Clock, Loader2, Camera } from 'lucide-react';
+import {
+  CheckCircle, FileText, Home, Image, Bed, MapPin, Search, Plus, Trash2,
+  ChevronLeft, ChevronRight, Upload, X, ArrowLeft, ArrowRight, Wifi, Clock,
+  Loader2, Camera, Wind, Droplets, Zap, Thermometer, Shirt,
+  Sparkles, Shield, Car, Dumbbell, Box, Flame, ArrowUpCircle, Tv, Utensils, User, Users
+} from 'lucide-react';
 import logo from '../../../assets/rokologin-removebg-preview.png';
 import { isFlutterApp, openFlutterCamera } from '../../../utils/flutterBridge';
 
@@ -13,12 +18,27 @@ const REQUIRED_DOCS_PG = [
 ];
 
 const PG_AMENITIES = [
-  { name: 'WiFi', icon: 'wifi' },
+  { name: 'Wi-Fi', icon: 'wifi' },
+  { name: 'AC', icon: 'air-vent' },
+  { name: 'Food', icon: 'utensils' },
   { name: 'Laundry', icon: 'washing-machine' },
   { name: 'Housekeeping', icon: 'broom' },
   { name: 'CCTV', icon: 'camera' },
-  { name: 'Security', icon: 'shield' }
+  { name: 'Security', icon: 'shield' },
+  { name: 'RO Water', icon: 'droplets' },
+  { name: 'Gym', icon: 'dumbbell' },
+  { name: 'Lift', icon: 'arrow-up-circle' },
+  { name: 'Power Backup', icon: 'zap' },
+  { name: 'Geyser', icon: 'thermometer' },
+  { name: 'Fridge', icon: 'refrigerator' },
+  { name: 'Parking', icon: 'car' },
+  { name: 'TV', icon: 'tv' },
+  { name: 'Kitchen', icon: 'flame' },
+  { name: 'Single Occupancy', icon: 'user' },
+  { name: 'Double Occupancy', icon: 'users' },
+  { name: 'Triple Occupancy', icon: 'users' }
 ];
+
 
 const ROOM_AMENITIES = [
   { key: 'bunk_bed', label: 'Bunk Bed', icon: Bed },
@@ -86,7 +106,7 @@ const AddPGWizard = () => {
     shortDescription: '',
     coverImage: '',
     propertyImages: [],
-    address: { country: '', state: '', city: '', area: '', fullAddress: '', pincode: '' },
+    address: { state: '', city: '', fullAddress: '', pincode: '' },
     location: { type: 'Point', coordinates: ['', ''] },
     nearbyPlaces: [],
     amenities: [],
@@ -115,7 +135,7 @@ const AddPGWizard = () => {
   const [originalRoomTypeIds, setOriginalRoomTypeIds] = useState([]);
 
   // --- Persistence Logic ---
-  const STORAGE_KEY = `hoomzo_pg_wizard_draft_${existingProperty?._id || 'new'}`;
+  const STORAGE_KEY = `hoomzo_pg_wizard_draft_${existingProperty?._id || 'new'} `;
 
   // 1. Load from localStorage
   useEffect(() => {
@@ -307,7 +327,7 @@ const AddPGWizard = () => {
         } else if (err.code === 3) { // TIMEOUT
           setError('Location request timed out.');
         } else {
-          setError(`Location error: ${err.message || 'Unknown error'}`);
+          setError(`Location error: ${err.message || 'Unknown error'} `);
         }
       } else {
         // Backend API error or other error
@@ -487,7 +507,7 @@ const AddPGWizard = () => {
           throw new Error(`File ${file.name} is not an image`);
         }
         if (file.size > 10 * 1024 * 1024) {
-          throw new Error(`Image ${file.name} is too large. Maximum 10MB allowed.`);
+          throw new Error(`Image ${file.name} is too large.Maximum 10MB allowed.`);
         }
         console.log(`Adding ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)...`);
         fd.append('images', file);
@@ -614,9 +634,9 @@ const AddPGWizard = () => {
 
   const nextFromLocation = () => {
     setError('');
-    const { country, state, city, area, fullAddress, pincode } = propertyForm.address;
-    if (!country || !state || !city || !area || !fullAddress || !pincode) {
-      setError('Please fill all address fields (Country, State, City, Area, Full address, Pincode).');
+    const { state, city, fullAddress, pincode } = propertyForm.address;
+    if (!state || !city || !fullAddress || !pincode) {
+      setError('Please fill all address fields (State, City, Full address, Pincode).');
       return;
     }
     // Coordinates are optional here; if missing we'll resolve from address at submit time
@@ -728,7 +748,6 @@ const AddPGWizard = () => {
         checkInTime: propertyForm.checkInTime,
         checkOutTime: propertyForm.checkOutTime,
         cancellationPolicy: propertyForm.cancellationPolicy,
-        cancellationPolicy: propertyForm.cancellationPolicy,
         houseRules: propertyForm.houseRules,
         documents: propertyForm.documents,
         pgDetails: {
@@ -828,7 +847,7 @@ const AddPGWizard = () => {
     if (step === 1) {
       setPropertyForm(prev => ({ ...prev, propertyName: '', description: '', shortDescription: '', pgType: 'boys' }));
     } else if (step === 2) {
-      updatePropertyForm('address', { country: 'India', state: '', city: '', area: '', fullAddress: '', pincode: '' });
+      updatePropertyForm('address', { state: '', city: '', fullAddress: '', pincode: '' });
       updatePropertyForm(['location', 'coordinates'], ['', '']);
     } else if (step === 3) {
       updatePropertyForm('amenities', []);
@@ -891,12 +910,12 @@ const AddPGWizard = () => {
         <div className="h-1 bg-gray-100 w-full">
           <div
             className="h-full bg-emerald-500 transition-all duration-300 ease-out"
-            style={{ width: `${(step / 9) * 100}%` }}
+            style={{ width: `${(step / 9) * 100}% ` }}
           />
         </div>
       </div>
 
-      <main className="flex-1 max-w-2xl mx-auto w-full p-4 md:p-6 pb-32">
+      <main className="flex-1 max-w-2xl mx-auto w-full p-4 md:px-6 md:pt-6 pb-52 md:pb-80">
         <div className="max-w-xl mx-auto">
           <div className="mb-6">
             <h1 className="text-2xl font-extrabold text-gray-900 mb-2">{getStepTitle()}</h1>
@@ -1051,10 +1070,7 @@ const AddPGWizard = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500">Country</label>
-                  <input className="input" value={propertyForm.address.country} onChange={e => updatePropertyForm(['address', 'country'], e.target.value)} />
-                </div>
+
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-500">State/Province</label>
                   <input className="input" value={propertyForm.address.state} onChange={e => updatePropertyForm(['address', 'state'], e.target.value)} />
@@ -1063,10 +1079,7 @@ const AddPGWizard = () => {
                   <label className="text-xs font-semibold text-gray-500">City</label>
                   <input className="input" value={propertyForm.address.city} onChange={e => updatePropertyForm(['address', 'city'], e.target.value)} />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500">Area/Sector</label>
-                  <input className="input" value={propertyForm.address.area} onChange={e => updatePropertyForm(['address', 'area'], e.target.value)} />
-                </div>
+
                 <div className="col-span-2 space-y-1">
                   <label className="text-xs font-semibold text-gray-500">Full Street Address</label>
                   <input className="input" placeholder="House/Flat No, Building Name..." value={propertyForm.address.fullAddress} onChange={e => updatePropertyForm(['address', 'fullAddress'], e.target.value)} />
@@ -1099,6 +1112,10 @@ const AddPGWizard = () => {
 
           {step === 3 && (
             <div className="space-y-6">
+              <div className="flex justify-between items-center px-1">
+                <h3 className="text-sm font-bold text-gray-800">Select Available Amenities</h3>
+                <span className="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">{propertyForm.amenities.length} Selected</span>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 {PG_AMENITIES.map(item => {
                   const isSelected = propertyForm.amenities.includes(item.name);
@@ -1111,18 +1128,41 @@ const AddPGWizard = () => {
                           : [...propertyForm.amenities, item.name];
                         updatePropertyForm('amenities', updated);
                       }}
-                      className={`p-4 rounded-xl border-2 flex flex-col items-center gap-3 transition-all ${isSelected ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-500' : 'border-gray-100 bg-white text-gray-600 hover:border-emerald-200 hover:bg-emerald-50/30'}`}
+                      className={`p-3 rounded-xl border-2 flex items-center gap-3 transition-all ${isSelected ? 'border-emerald-500 bg-emerald-50/50 text-emerald-700 shadow-sm' : 'border-gray-100 bg-white text-gray-500 hover:border-emerald-100 hover:bg-emerald-50/20'}`}
                     >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isSelected ? 'bg-emerald-100' : 'bg-gray-100'}`}>
-                        {item.name === 'WiFi' ? <Wifi size={20} className={isSelected ? 'text-emerald-600' : 'text-gray-400'} /> : <CheckCircle size={20} className={isSelected ? 'text-emerald-600' : 'text-gray-400'} />}
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors shadow-sm ${isSelected ? 'bg-emerald-500 text-white' : 'bg-gray-50 text-gray-400'}`}>
+                        {(() => {
+                          const IconComponent = {
+                            'wifi': Wifi,
+                            'air-vent': Wind,
+                            'droplets': Droplets,
+                            'zap': Zap,
+                            'thermometer': Thermometer,
+                            'washing-machine': Shirt,
+                            'broom': Sparkles,
+                            'camera': Camera,
+                            'shield': Shield,
+                            'car': Car,
+                            'dumbbell': Dumbbell,
+                            'refrigerator': Box,
+                            'flame': Flame,
+                            'arrow-up-circle': ArrowUpCircle,
+                            'tv': Tv,
+                            'utensils': Utensils,
+                            'user': User,
+                            'users': Users
+                          }[item.icon] || CheckCircle;
+                          return <IconComponent size={16} />;
+                        })()}
                       </div>
-                      <span className="font-bold text-sm">{item.name}</span>
+                      <span className={`font-bold text-xs truncate ${isSelected ? 'text-emerald-900' : 'text-gray-600'}`}>{item.name}</span>
                     </button>
                   );
                 })}
               </div>
             </div>
           )}
+
 
 
 
@@ -1221,7 +1261,11 @@ const AddPGWizard = () => {
                               <div>
                                 <div className="font-bold text-gray-900 text-lg">{rt.name}</div>
                                 <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                                  <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">{rt.roomCategory}</span>
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${rt.roomCategory === 'triple' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                                    rt.roomCategory === 'double' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
+                                      rt.roomCategory === 'private' ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' :
+                                        'bg-gray-100 text-gray-700'
+                                    }`}>{rt.roomCategory}</span>
                                   <span>•</span>
                                   <span className="font-semibold text-gray-900">₹{rt.pricePerNight}</span>
                                   <span className="text-xs">/ month</span>
@@ -1268,9 +1312,20 @@ const AddPGWizard = () => {
                   </div>
 
                   <div className="p-4 space-y-5">
-                    <div className="p-1 bg-gray-100 rounded-xl flex">
-                      <button onClick={() => setEditingRoomType({ ...editingRoomType, roomCategory: 'shared' })} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editingRoomType.roomCategory === 'shared' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Shared Dorm</button>
-                      <button onClick={() => setEditingRoomType({ ...editingRoomType, roomCategory: 'private' })} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${editingRoomType.roomCategory === 'private' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Private Room</button>
+                    <div className="p-1 bg-gray-100 rounded-xl flex gap-1">
+                      {[
+                        { id: 'triple', label: 'Triple Sharing' },
+                        { id: 'double', label: 'Double Sharing' },
+                        { id: 'private', label: 'Private Room' }
+                      ].map(opt => (
+                        <button
+                          key={opt.id}
+                          onClick={() => setEditingRoomType({ ...editingRoomType, roomCategory: opt.id })}
+                          className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${editingRoomType.roomCategory === opt.id ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
                     </div>
 
                     <div className="space-y-1">
@@ -1417,7 +1472,7 @@ const AddPGWizard = () => {
                   onChange={e =>
                     updatePropertyForm(
                       'houseRules',
-                      e.target.value.split(',').map(s => s.trim())
+                      e.target.value.split(',').map(s => s.trimStart())
                     )
                   }
                 />
@@ -1450,7 +1505,7 @@ const AddPGWizard = () => {
                         <button
                           type="button"
                           onClick={() => isFlutter
-                            ? handleCameraUpload(`doc_${idx}`, url => {
+                            ? handleCameraUpload(`doc_${idx} `, url => {
                               const next = [...propertyForm.documents];
                               next[idx].fileUrl = url;
                               updatePropertyForm('documents', next);
@@ -1462,7 +1517,7 @@ const AddPGWizard = () => {
                             : 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-white hover:border-emerald-400 hover:text-emerald-600'
                             }`}
                         >
-                          {uploading === `doc_${idx}` ? (
+                          {uploading === `doc_${idx} ` ? (
                             <><Loader2 size={16} className="animate-spin" /> Uploading...</>
                           ) : doc.fileUrl ? (
                             <>Change File</>
@@ -1484,7 +1539,7 @@ const AddPGWizard = () => {
                         onChange={e => {
                           const file = e.target.files[0];
                           if (!file) return;
-                          uploadImages([file], `doc_${idx}`, urls => {
+                          uploadImages([file], `doc_${idx} `, urls => {
                             if (urls[0]) {
                               const updated = [...propertyForm.documents];
                               updated[idx] = { ...updated[idx], fileUrl: urls[0] };

@@ -16,17 +16,58 @@ const SearchPage = () => {
     const [showFilters, setShowFilters] = useState(false); // Mobile toggle
 
     // Filters State
-    const [filters, setFilters] = useState({
-        search: searchParams.get('search') || '',
-        type: searchParams.get('type')
-            ? (searchParams.get('type') === 'all' ? 'all' : searchParams.get('type').split(','))
-            : 'all',
-        minPrice: searchParams.get('minPrice') || '',
-        maxPrice: searchParams.get('maxPrice') || '',
-        sort: searchParams.get('sort') || 'newest',
-        amenities: [],
-        radius: 50
-    });
+    // Initialize filters from URL
+    const getInitialFilters = () => {
+        const amsFromUrl = searchParams.get('amenities')?.split(',') || [];
+        const bhksFromUrl = searchParams.get('bhkType')?.split(',') || [];
+        const furnishFromUrl = searchParams.get('furnishing')?.split(',') || [];
+        const genderFromUrl = searchParams.get('gender')?.split(',') || [];
+        const occupancyFromUrl = searchParams.get('occupancy')?.split(',') || [];
+        const landTypeFromUrl = searchParams.get('landType')?.split(',') || [];
+
+        // Map back to UI labels
+        bhksFromUrl.forEach(v => {
+            if (v === '1BHK') amsFromUrl.push('1 BHK');
+            else if (v === '2BHK') amsFromUrl.push('2 BHK');
+            else if (v === '3BHK') amsFromUrl.push('3 BHK');
+            else if (v === 'Villa') amsFromUrl.push('Villa');
+            else if (v === 'Studio') amsFromUrl.push('Studio');
+        });
+
+        furnishFromUrl.forEach(v => {
+            if (v === 'Fully') amsFromUrl.push('Fully Furnished');
+            else if (v === 'Semi') amsFromUrl.push('Semi Furnished');
+            else if (v === 'Unfurnished') amsFromUrl.push('Unfurnished');
+        });
+
+        genderFromUrl.forEach(v => {
+            if (v === 'Boys') amsFromUrl.push('Boys Only');
+            else if (v === 'Girls') amsFromUrl.push('Girls Only');
+            else if (v === 'Co-ed') amsFromUrl.push('Coliving');
+        });
+
+        occupancyFromUrl.forEach(v => {
+            if (v === 'Single') amsFromUrl.push('Single Occupancy');
+            else if (v === 'Double') amsFromUrl.push('Double Occupancy');
+            else if (v === 'Triple') amsFromUrl.push('Triple Occupancy');
+        });
+
+        landTypeFromUrl.forEach(v => amsFromUrl.push(v)); // Residential, Commercial etc match labels
+
+        return {
+            search: searchParams.get('search') || '',
+            type: searchParams.get('type')
+                ? (searchParams.get('type') === 'all' ? 'all' : searchParams.get('type').split(','))
+                : 'all',
+            minPrice: searchParams.get('minPrice') || '',
+            maxPrice: searchParams.get('maxPrice') || '',
+            sort: searchParams.get('sort') || 'newest',
+            amenities: [...new Set(amsFromUrl)],
+            radius: parseInt(searchParams.get('radius')) || 50
+        };
+    };
+
+    const [filters, setFilters] = useState(getInitialFilters());
 
     const [location, setLocation] = useState(null); // { lat, lng }
     const [propertyTypes, setPropertyTypes] = useState([
@@ -36,6 +77,10 @@ const SearchPage = () => {
         { id: 'buy', label: 'Buy' },
         { id: 'plot', label: 'Plot' }
     ]);
+
+    useEffect(() => {
+        setFilters(getInitialFilters());
+    }, [searchParams]);
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -80,16 +125,36 @@ const SearchPage = () => {
         const label = typeObj ? typeObj.label.toLowerCase() : '';
 
         if (label.includes('pg') || label.includes('hostel')) {
-            return ['Boys Only', 'Girls Only', 'Coliving', '1 Seater', '2 Seater', '3 Seater', 'Wi-Fi', 'AC', 'Food', 'Laundry'];
+            return [
+                'Boys Only', 'Girls Only', 'Coliving',
+                'Single Occupancy', 'Double Occupancy', 'Triple Occupancy',
+                'Wi-Fi', 'AC', 'Food', 'Laundry', 'Housekeeping', 'CCTV', 'Security',
+                'RO Water', 'Gym', 'Lift', 'Power Backup', 'Geyser', 'Fridge', 'Parking', 'TV', 'Kitchen'
+            ];
         }
         if (label.includes('rent')) {
-            return ['1 BHK', '2 BHK', '3 BHK', 'Furnished', 'Semi-Furnished', 'Unfurnished', 'Parking', 'Kitchen', 'Security'];
+            return [
+                '1 BHK', '2 BHK', '3 BHK', 'Villa', 'Studio',
+                'Fully Furnished', 'Semi Furnished', 'Unfurnished',
+                'Lift', 'Parking', 'Power Backup', 'Water Supply', 'Security Guard', 'CCTV', 'Comfort Amenities',
+                'Gym', 'Garden', 'Balcony', 'Modular Kitchen', 'Air Conditioning'
+            ];
         }
         if (label.includes('buy')) {
-            return ['Flat', 'House', 'Villa', 'East Facing', 'West Facing', 'North Facing', 'South Facing', 'Ready to Move', 'Under Construction'];
+            return [
+                'Apartment', 'Villa', 'Independent House',
+                'Ready to Move', 'Under Construction',
+                'East Facing', 'West Facing', 'North Facing', 'South Facing',
+                'Lift', 'Parking', 'Power Backup', 'Water Supply', 'Security Guard', 'CCTV',
+                'Gym', 'Garden', 'Balcony', 'Modular Kitchen', 'Air Conditioning', 'Club House'
+            ];
         }
         if (label.includes('plot')) {
-            return ['Residential', 'Commercial', 'East Facing', 'West Facing', 'Boundary Wall', 'Gated Community', 'Red Soil', 'Black Soil'];
+            return [
+                'Residential', 'Commercial', 'Agricultural', 'Industrial',
+                'East Facing', 'West Facing', 'North Facing', 'South Facing',
+                'Boundary Wall', 'Gated Community', 'Red Soil', 'Black Soil', 'Electricity Available', 'Water Source'
+            ];
         }
 
         return ['Wi-Fi', 'AC', 'Parking', 'Kitchen', 'Geyser', 'Power Backup'];
@@ -158,10 +223,56 @@ const SearchPage = () => {
         if (filters.minPrice) params.minPrice = filters.minPrice;
         if (filters.maxPrice) params.maxPrice = filters.maxPrice;
         if (filters.sort) params.sort = filters.sort;
-        if (filters.amenities.length > 0) params.amenities = filters.amenities.join(',');
+
+        // Map Special Amenities to specific query params
+        const finalAmenities = [];
+        const bhks = [];
+        const furnishLevels = [];
+        const genders = [];
+        const occupancies = [];
+        const landTypes = [];
+
+        filters.amenities.forEach(am => {
+            // Rent BHK mapping
+            if (am === '1 BHK') bhks.push('1BHK');
+            else if (am === '2 BHK') bhks.push('2BHK');
+            else if (am === '3 BHK') bhks.push('3BHK');
+            else if (am === 'Villa') bhks.push('Villa');
+            else if (am === 'Studio') bhks.push('Studio');
+
+            // Rent Furnishing mapping
+            else if (am === 'Fully Furnished') furnishLevels.push('Fully');
+            else if (am === 'Semi Furnished') furnishLevels.push('Semi');
+            else if (am === 'Unfurnished') furnishLevels.push('Unfurnished');
+
+            // PG Gender mapping
+            else if (am === 'Boys Only') genders.push('Boys');
+            else if (am === 'Girls Only') genders.push('Girls');
+            else if (am === 'Coliving') genders.push('Co-ed');
+
+            // PG Occupancy mapping
+            else if (am === 'Single Occupancy') occupancies.push('Single');
+            else if (am === 'Double Occupancy') occupancies.push('Double');
+            else if (am === 'Triple Occupancy') occupancies.push('Triple');
+
+            // Plot Land Type mapping
+            else if (am === 'Residential' && filters.type !== 'all' && (String(filters.type).toLowerCase().includes('plot') || String(filters.type).toLowerCase().includes('sell'))) landTypes.push('Residential');
+            else if (am === 'Commercial') landTypes.push('Commercial');
+            else if (am === 'Agricultural') landTypes.push('Agricultural');
+            else if (am === 'Industrial') landTypes.push('Industrial');
+
+            else finalAmenities.push(am);
+        });
+
+        if (finalAmenities.length > 0) params.amenities = finalAmenities.join(',');
+        if (bhks.length > 0) params.bhkType = bhks.join(',');
+        if (furnishLevels.length > 0) params.furnishing = furnishLevels.join(',');
+        if (genders.length > 0) params.gender = genders.join(',');
+        if (occupancies.length > 0) params.occupancy = occupancies.join(',');
+        if (landTypes.length > 0) params.landType = landTypes.join(',');
 
         setSearchParams(params);
-        setShowFilters(false); // Close mobile menu if open
+        setShowFilters(false);
     };
 
     const handleNearMe = async () => {
@@ -195,101 +306,102 @@ const SearchPage = () => {
         <div className="min-h-screen bg-white pb-24">
 
             {/* Sticky Header */}
-            <div className="sticky top-0 z-30 bg-white border-b border-gray-100 pb-3 pt-3 px-4 shadow-sm">
+            <div className="sticky top-0 md:top-24 z-30 bg-white border-b border-gray-100 pb-1.5 pt-3 md:pt-2 px-4 shadow-sm">
 
-                {/* Search Input Row */}
-                <div className="relative mb-3">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Search by city, hotel, or area..."
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-1 focus:ring-surface focus:border-surface outline-none text-sm font-medium text-gray-700 bg-gray-50/50"
-                        value={filters.search}
-                        onChange={(e) => updateFilter('search', e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
-                    />
-                </div>
-
-                {/* Actions Row */}
-                <div className="flex gap-3">
-                    <button
-                        onClick={handleNearMe}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-bold transition-all active:scale-95
-                        ${location
-                                ? 'bg-surface/5 text-surface border-surface'
-                                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
-                    >
-                        <Navigation size={14} className={location ? "fill-surface text-surface" : ""} />
-                        {location ? "Nearby Active" : "Near Me"}
-                    </button>
-
-                    <button
-                        onClick={() => setShowFilters(!showFilters)}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-bold transition-all active:scale-95
-                        ${(filters.minPrice || filters.maxPrice || (Array.isArray(filters.type) && filters.type.length > 0 && filters.type !== 'all') || filters.amenities.length > 0)
-                                ? 'bg-surface/5 text-surface border-surface'
-                                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
-                    >
-                        <Filter size={14} className={(filters.minPrice || filters.maxPrice || (Array.isArray(filters.type) && filters.type.length > 0 && filters.type !== 'all') || filters.amenities.length > 0) ? "fill-surface text-surface" : ""} />
-                        Filters
-                    </button>
-                </div>
-
-                {/* Radius Slider - Shows when Near Me is active */}
-                {location && (
-                    <div className="mt-3 pt-3 border-t border-gray-100 transition-all animate-in fade-in slide-in-from-top-2">
-                        <div className="flex items-center justify-between mb-2">
-                            <label className="text-xs font-bold text-gray-500 flex items-center gap-1">
-                                <MapPin size={12} />
-                                Search Radius
-                            </label>
-                            <span className="text-xs font-bold text-surface bg-surface/10 px-2 py-0.5 rounded-full">
-                                {filters.radius} km
-                            </span>
+                <div className="max-w-7xl mx-auto">
+                    {/* Search & Actions Row */}
+                    <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2 md:mb-1">
+                        {/* Search Input Row */}
+                        <div className="relative flex-grow">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Search by city, hotel, or area..."
+                                className="w-full pl-10 pr-4 py-2 md:py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-surface focus:border-surface outline-none text-sm font-medium text-gray-700 bg-gray-100/30"
+                                value={filters.search}
+                                onChange={(e) => updateFilter('search', e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
+                            />
                         </div>
-                        <input
-                            type="range"
-                            min="1"
-                            max="100"
-                            step="1"
-                            value={filters.radius}
-                            onChange={(e) => updateFilter('radius', Number(e.target.value))}
-                            onMouseUp={() => fetchProperties()}
-                            onTouchEnd={() => fetchProperties()}
-                            className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-surface"
-                        />
-                        <div className="flex justify-between mt-1">
-                            <span className="text-[10px] text-gray-400 font-medium">1 km</span>
-                            <span className="text-[10px] text-gray-400 font-medium">100 km</span>
+
+                        {/* Actions Row */}
+                        <div className="flex gap-2 md:w-72">
+                            <button
+                                onClick={handleNearMe}
+                                className={`flex-1 flex items-center justify-center gap-2 py-2 md:py-1.5 rounded-lg border text-[11px] font-bold transition-all active:scale-95
+                                ${location
+                                        ? 'bg-surface/5 text-surface border-surface'
+                                        : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'}`}
+                            >
+                                <Navigation size={14} className={location ? "fill-surface text-surface" : ""} />
+                                {location ? "Nearby" : "Near Me"}
+                            </button>
+
+                            <button
+                                onClick={() => setShowFilters(!showFilters)}
+                                className={`flex-1 flex items-center justify-center gap-2 py-2 md:py-1.5 rounded-lg border text-[11px] font-bold transition-all active:scale-95
+                                ${(filters.minPrice || filters.maxPrice || (Array.isArray(filters.type) && filters.type.length > 0 && filters.type !== 'all') || filters.amenities.length > 0)
+                                        ? 'bg-surface/5 text-surface border-surface'
+                                        : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'}`}
+                            >
+                                <Filter size={14} className={(filters.minPrice || filters.maxPrice || (Array.isArray(filters.type) && filters.type.length > 0 && filters.type !== 'all') || filters.amenities.length > 0) ? "fill-surface text-surface" : ""} />
+                                Filters
+                            </button>
                         </div>
                     </div>
-                )}
 
-                {/* Horizontal Dynamic Tabs */}
-                <div className="mt-3 -mx-4 border-t border-gray-50">
-                    <PropertyTypeFilter
-                        selectedType={Array.isArray(filters.type) ? filters.type[0] : filters.type}
-                        onSelectType={(type) => {
-                            const newType = type === 'All' ? 'all' : type;
-                            setFilters(prev => ({ ...prev, type: newType, amenities: [] }));
+                    {/* Radius Slider - Shows when Near Me is active */}
+                    {location && (
+                        <div className="mt-2 pt-2 border-t border-gray-100 transition-all animate-in fade-in slide-in-from-top-2">
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="text-xs font-bold text-gray-500 flex items-center gap-1">
+                                    <MapPin size={12} />
+                                    Search Radius
+                                </label>
+                                <span className="text-xs font-bold text-surface bg-surface/10 px-2 py-0.5 rounded-full">
+                                    {filters.radius} km
+                                </span>
+                            </div>
+                            <input
+                                type="range"
+                                min="1"
+                                max="100"
+                                step="1"
+                                value={filters.radius}
+                                onChange={(e) => updateFilter('radius', Number(e.target.value))}
+                                onMouseUp={() => fetchProperties()}
+                                onTouchEnd={() => fetchProperties()}
+                                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-surface"
+                            />
+                        </div>
+                    )}
 
-                            // Immediately apply and search
-                            const params = { ...Object.fromEntries([...searchParams]) };
-                            if (newType === 'all') {
-                                delete params.type;
-                            } else {
-                                params.type = newType;
-                            }
-                            // Clear amenities from URL when switching type
-                            delete params.amenities;
-                            setSearchParams(params);
-                        }}
-                    />
+                    {/* Horizontal Dynamic Tabs */}
+                    <div className="mt-1 md:mt-0 -mx-4 border-t border-gray-50/50">
+                        <PropertyTypeFilter
+                            selectedType={Array.isArray(filters.type) ? filters.type[0] : filters.type}
+                            onSelectType={(type) => {
+                                const newType = type === 'All' ? 'all' : type;
+                                setFilters(prev => ({ ...prev, type: newType, amenities: [] }));
+
+                                // Immediately apply and search
+                                const params = { ...Object.fromEntries([...searchParams]) };
+                                if (newType === 'all') {
+                                    delete params.type;
+                                } else {
+                                    params.type = newType;
+                                }
+                                // Clear amenities from URL when switching type
+                                delete params.amenities;
+                                setSearchParams(params);
+                            }}
+                        />
+                    </div>
                 </div>
             </div>
 
             {/* Content Area */}
-            <div className="px-4 py-4">
+            <div className="max-w-7xl mx-auto px-4 py-4 md:py-2">
 
                 {/* Results Count & Sort */}
                 <div className="flex items-center justify-between mb-4">

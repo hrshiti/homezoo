@@ -223,12 +223,12 @@ const PartnerBookingDetail = () => {
           <h3 className="font-bold text-gray-900 mb-3 text-sm flex items-center gap-2">
             <Calendar size={16} className="text-gray-400" /> {isInquiry ? 'Inquiry Details' : (isPG || isRent ? 'Tenancy Details' : 'Stay Details')}
           </h3>
-          <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className={`grid gap-3 mb-3 ${(!isBuyPlot && (!isInquiry || booking.checkOutDate)) ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <div className="p-2.5 bg-gray-50 rounded-xl">
               <p className="text-[9px] text-gray-400 font-bold uppercase mb-0.5">{checkInLabel}</p>
               <p className="font-bold text-gray-900 text-sm">{booking.checkInDate || booking.inquiryMetadata?.preferredDate ? new Date(booking.checkInDate || booking.inquiryMetadata?.preferredDate).toLocaleDateString() : 'N/A'}</p>
             </div>
-            {!isBuyPlot && (
+            {!isBuyPlot && (!isInquiry || booking.checkOutDate) && (
               <div className="p-2.5 bg-gray-50 rounded-xl">
                 <p className="text-[9px] text-gray-400 font-bold uppercase mb-0.5">{checkOutLabel}</p>
                 <p className="font-bold text-gray-900 text-sm">{booking.checkOutDate ? new Date(booking.checkOutDate).toLocaleDateString() : 'N/A'}</p>
@@ -245,12 +245,15 @@ const PartnerBookingDetail = () => {
                 <p className="text-xs text-gray-900 font-bold">
                   {booking.bookingUnit === 'entire' ? '1 Unit' : booking.bookingUnit === 'bed' ? '1 Bed' : '1 Room'}
                 </p>
-                <p className="text-[10px] text-gray-500 font-medium">
-                  {booking.totalNights} {durationLabel}
-                </p>
+                {!isInquiry && (
+                  <p className="text-[10px] text-gray-500 font-medium">
+                    {booking.totalNights} {durationLabel}
+                  </p>
+                )}
               </div>
             </div>
           )}
+
           {isInquiry && booking.inquiryMetadata?.message && (
             <div className="mt-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
               <p className="text-[9px] text-blue-400 font-bold uppercase mb-1">User Message</p>

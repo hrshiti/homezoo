@@ -22,7 +22,7 @@ const roomTypeSchema = new mongoose.Schema({
     // Supports both standard room categories relative to 'room' inventory, and tent types relative to 'tent' inventory
     enum: [
       // Standard
-      "private", "shared", "entire",
+      "private", "shared", "entire", "triple", "double",
       // Tent Types
       "Luxury Swiss Tent", "Dome Tent", "Safari Tent", "Camping Tent", "Glamping Pod"
     ]

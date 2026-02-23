@@ -55,7 +55,7 @@ const AddVillaWizard = () => {
     shortDescription: '',
     coverImage: '',
     propertyImages: [],
-    address: { country: '', state: '', city: '', area: '', fullAddress: '', pincode: '' },
+    address: { state: '', city: '', fullAddress: '', pincode: '' },
     location: { type: 'Point', coordinates: ['', ''] },
     nearbyPlaces: [],
     amenities: [],
@@ -604,9 +604,9 @@ const AddVillaWizard = () => {
 
   const nextFromLocation = () => {
     setError('');
-    const { country, state, city, area, fullAddress, pincode } = propertyForm.address;
-    if (!country || !state || !city || !area || !fullAddress || !pincode) {
-      setError('All address fields are required');
+    const { state, city, fullAddress, pincode } = propertyForm.address;
+    if (!state || !city || !fullAddress || !pincode) {
+      setError('State, City, Full Address and Pincode are required');
       return;
     }
     if (!propertyForm.location.coordinates[0] || !propertyForm.location.coordinates[1]) {
@@ -786,7 +786,7 @@ const AddVillaWizard = () => {
     if (step === 1) {
       setPropertyForm(prev => ({ ...prev, propertyName: '', description: '', shortDescription: '', coverImage: '' }));
     } else if (step === 2) {
-      updatePropertyForm('address', { country: '', state: '', city: '', area: '', fullAddress: '', pincode: '' });
+      updatePropertyForm('address', { state: '', city: '', fullAddress: '', pincode: '' });
       updatePropertyForm(['location', 'coordinates'], ['', '']);
     } else if (step === 3) {
       updatePropertyForm('amenities', []);
@@ -858,7 +858,7 @@ const AddVillaWizard = () => {
         </div>
       </div>
 
-      <main className="flex-1 max-w-2xl mx-auto w-full p-4 md:p-6 pb-32">
+      <main className="flex-1 max-w-2xl mx-auto w-full p-4 md:px-6 md:pt-6 pb-52 md:pb-80">
         <div className="max-w-xl mx-auto">
           {step === 1 && (
             <div className="space-y-6">
@@ -948,10 +948,7 @@ const AddVillaWizard = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500">Country</label>
-                  <input className="input" value={propertyForm.address.country} onChange={e => updatePropertyForm(['address', 'country'], e.target.value)} />
-                </div>
+
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-500">State/Province</label>
                   <input className="input" value={propertyForm.address.state} onChange={e => updatePropertyForm(['address', 'state'], e.target.value)} />
@@ -960,10 +957,7 @@ const AddVillaWizard = () => {
                   <label className="text-xs font-semibold text-gray-500">City</label>
                   <input className="input" value={propertyForm.address.city} onChange={e => updatePropertyForm(['address', 'city'], e.target.value)} />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500">Area/Sector</label>
-                  <input className="input" value={propertyForm.address.area} onChange={e => updatePropertyForm(['address', 'area'], e.target.value)} />
-                </div>
+
                 <div className="col-span-2 space-y-1">
                   <label className="text-xs font-semibold text-gray-500">Full Street Address</label>
                   <input className="input" placeholder="House/Flat No, Building Name..." value={propertyForm.address.fullAddress} onChange={e => updatePropertyForm(['address', 'fullAddress'], e.target.value)} />

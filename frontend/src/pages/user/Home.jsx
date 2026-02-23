@@ -129,7 +129,7 @@ const Home = () => {
 
                 {/* Content on top */}
                 <div className="relative z-[2] flex flex-col min-h-[280px] md:min-h-[340px]">
-                    <HeroSection theme={activeTheme} />
+                    <HeroSection theme={activeTheme} selectedType={selectedType} />
 
                     {/* Small gap between search bar and category (mobile); minimal on desktop */}
                     <div className="pt-0 flex-shrink-0 md:pt-1 md:min-h-0" />

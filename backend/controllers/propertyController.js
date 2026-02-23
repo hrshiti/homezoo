@@ -475,7 +475,15 @@ export const getPublicProperties = async (req, res) => {
       lng,
       radius = 50, // default 50km
       guests,
-      sort
+      sort,
+      // Rent specific
+      bhkType,
+      furnishing,
+      // PG specific
+      gender,
+      occupancy,
+      // Plot specific
+      landType
     } = req.query;
 
     const pipeline = [];
@@ -573,6 +581,33 @@ export const getPublicProperties = async (req, res) => {
       if (amList.length > 0) {
         matchConditions.amenities = { $all: amList };
       }
+    }
+
+    // 2.1 Property Specific Filters
+    if (bhkType) {
+      const bhkList = bhkType.split(',').map(t => new RegExp(`^${t.trim()}$`, 'i'));
+      matchConditions['rentDetails.type'] = { $in: bhkList };
+    }
+    if (furnishing) {
+      const furnishList = furnishing.split(',').map(f => new RegExp(`^${f.trim()}$`, 'i'));
+      matchConditions['rentDetails.furnishing'] = { $in: furnishList };
+    }
+    if (gender) {
+      const genderList = gender.split(',').map(g => new RegExp(`^${g.trim()}$`, 'i'));
+      // Check both pgType (old) and pgDetails.gender (new)
+      matchConditions.$or = matchConditions.$or || [];
+      matchConditions.$or.push(
+        { pgType: { $in: genderList } },
+        { 'pgDetails.gender': { $in: genderList } }
+      );
+    }
+    if (occupancy) {
+      const occList = occupancy.split(',').map(o => new RegExp(`^${o.trim()}$`, 'i'));
+      matchConditions['pgDetails.occupancy'] = { $in: occList };
+    }
+    if (landType) {
+      const landList = landType.split(',').map(l => new RegExp(`^${l.trim()}$`, 'i'));
+      matchConditions['plotDetails.landType'] = { $in: landList };
     }
 
     if (Object.keys(matchConditions).length > 0) {

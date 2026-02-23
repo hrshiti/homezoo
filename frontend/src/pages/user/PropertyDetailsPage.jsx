@@ -5,7 +5,8 @@ import { propertyService, legalService, reviewService, offerService, availabilit
 import {
   MapPin, Star, Share2, Heart, ArrowLeft,
   Users, Calendar, Loader2, ChevronLeft, ChevronRight, MessageSquare, Tag, X, Gift,
-  CheckCircle, Shield, Info, Clock, Wifi, Coffee, Car, Phone, Scan, Maximize2, Compass, Move, Grid, Landmark, LayoutTemplate
+  CheckCircle, Shield, Info, Clock, Wifi, Coffee, Car, Phone, Scan, Maximize2, Compass, Move, Grid, Landmark, LayoutTemplate,
+  Wind, Droplets, Zap, Thermometer, Shirt, Sparkles, Camera, Dumbbell, Box, Flame, ArrowUpCircle, Tv, Utensils, User
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ModernDatePicker from '../../components/ui/ModernDatePicker';
@@ -804,7 +805,7 @@ const PropertyDetailsPage = () => {
                     <span className="line-clamp-3 md:line-clamp-1">
                       {address?.fullAddress}
                       {address?.city ? `, ${address.city}` : ''}
-                      {address?.district ? `, ${address.district}` : ''}
+
                       {address?.state ? `, ${address.state}` : ''}
                       {address?.pincode ? ` - ${address.pincode}` : ''}
                     </span>
@@ -868,7 +869,41 @@ const PropertyDetailsPage = () => {
                       {validAmenities.map((item, idx) => (
                         <div key={idx} className="flex items-center gap-3 text-gray-600 text-sm">
                           <div className="p-2 bg-gray-50 rounded-lg">
-                            <CheckCircle size={16} className="text-surface" />
+                            {(() => {
+                              const iconName = item.toLowerCase().trim();
+                              const IconComponent = {
+                                'wi-fi': Wifi,
+                                'wifi': Wifi,
+                                'ac': Wind,
+                                'air conditioning': Wind,
+                                'ro water': Droplets,
+                                'water': Droplets,
+                                'power backup': Zap,
+                                'backup': Zap,
+                                'geyser': Thermometer,
+                                'laundry': Shirt,
+                                'washing machine': Shirt,
+                                'housekeeping': Sparkles,
+                                'cleaning': Sparkles,
+                                'cctv': Camera,
+                                'security': Shield,
+                                'parking': Car,
+                                'gym': Dumbbell,
+                                'fridge': Box,
+                                'refrigerator': Box,
+                                'kitchen': Flame,
+                                'induction': Flame,
+                                'lift': ArrowUpCircle,
+                                'tv': Tv,
+                                'television': Tv,
+                                'food': Utensils,
+                                'meal': Utensils,
+                                'single occupancy': User,
+                                'double occupancy': Users,
+                                'triple occupancy': Users
+                              }[iconName] || CheckCircle;
+                              return <IconComponent size={16} className="text-surface" />;
+                            })()}
                           </div>
                           {item}
                         </div>
@@ -1215,11 +1250,20 @@ const PropertyDetailsPage = () => {
                           </div>
                         )}
                         <div className="flex gap-1.5 flex-wrap">
-                          {room.roomCategory && (
-                            <span className="text-[10px] bg-surface/10 text-surface px-2 py-0.5 rounded font-bold uppercase tracking-tighter">
-                              {room.roomCategory}
-                            </span>
-                          )}
+                          {room.roomCategory && (() => {
+                            const config = {
+                              triple: { label: 'Triple Sharing', bg: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
+                              double: { label: 'Double Sharing', bg: 'bg-blue-50 text-blue-700 border-blue-100' },
+                              private: { label: 'Private Room', bg: 'bg-indigo-50 text-indigo-700 border-indigo-100' },
+                              shared: { label: 'Shared Dorm', bg: 'bg-gray-100 text-gray-700 border-gray-200' }
+                            }[room.roomCategory.toLowerCase()] || { label: room.roomCategory, bg: 'bg-surface/10 text-surface border-surface/20' };
+
+                            return (
+                              <span className={`text-[9px] ${config.bg} px-2 py-0.5 rounded border font-bold uppercase tracking-wider`}>
+                                {config.label}
+                              </span>
+                            );
+                          })()}
                           {room.bathroomType && (
                             <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold uppercase tracking-tighter">
                               {room.bathroomType}

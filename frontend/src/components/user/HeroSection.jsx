@@ -6,13 +6,23 @@ import MobileMenu from '../../components/ui/MobileMenu';
 import { useNavigate } from 'react-router-dom';
 import walletService from '../../services/walletService';
 
-const HeroSection = ({ theme }) => {
+const HeroSection = ({ theme, selectedType }) => {
     const accentColor = theme?.accent || '#10B981';
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [placeholderIndex, setPlaceholderIndex] = useState(0);
     const [isSticky, setIsSticky] = useState(false);
     const [walletBalance, setWalletBalance] = useState(0);
+
+    const categoryContent = {
+        'All': "Find your space — PG/Co-Living, Rent, Buy & Plots. Your home, your way.",
+        'PG/Co-Living': "Scholar & Professional Stays. Premium PGs and Co-living spaces designed for comfort.",
+        'Rent': "Premium Homes for Rent. Find your ideal match from chic apartments to spacious villas.",
+        'Buy': "Invest in your Future. Discover exclusive properties and luxury estates for sale.",
+        'Plot': "Premium Plots in Prime Locations. Build your vision on the perfect foundation."
+    };
+
+    const displayContent = categoryContent[selectedType?.label] || categoryContent['All'];
 
     const placeholders = [
         "Search in Bucharest...",
@@ -113,9 +123,19 @@ const HeroSection = ({ theme }) => {
             </div>
 
             {/* Tagline - project related (hidden on mobile) */}
-            <p className="hidden md:block text-center text-white/95 text-sm md:text-lg font-medium drop-shadow-md px-2 max-w-xl mx-auto">
-                Find your space — PG/Co-Living, Rent, Buy & Plots. Your home, your way.
-            </p>
+            <div className="hidden md:block text-center text-white/95 text-sm md:text-lg font-medium drop-shadow-md px-2 max-w-xl mx-auto">
+                <AnimatePresence mode="wait">
+                    <motion.p
+                        key={displayContent}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        {displayContent}
+                    </motion.p>
+                </AnimatePresence>
+            </div>
 
             {/* 2. Search Bar - Sticky Logic with smooth animation */}
             <motion.div

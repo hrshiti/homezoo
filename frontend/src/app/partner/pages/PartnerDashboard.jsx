@@ -10,7 +10,7 @@ import { Calendar, Wallet, Building2, Star, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const PartnerDashboard = () => {
-    useLenis();
+    // Lenis handled globally
     const navigate = useNavigate();
     const { stats, recentBookings, actionItems, loading, user } = usePartnerDashboard();
 

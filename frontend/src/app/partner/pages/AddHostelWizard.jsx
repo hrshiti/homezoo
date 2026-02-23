@@ -66,7 +66,7 @@ const AddHostelWizard = () => {
     shortDescription: '',
     coverImage: '',
     propertyImages: [],
-    address: { country: '', state: '', city: '', area: '', fullAddress: '', pincode: '' },
+    address: { state: '', city: '', fullAddress: '', pincode: '' },
     location: { type: 'Point', coordinates: ['', ''] },
     nearbyPlaces: [],
     amenities: [],
@@ -582,9 +582,9 @@ const AddHostelWizard = () => {
 
   const nextFromLocation = () => {
     setError('');
-    const { country, state, city, area, fullAddress, pincode } = propertyForm.address;
-    if (!country || !state || !city || !area || !fullAddress || !pincode) {
-      setError('All address fields are required');
+    const { state, city, fullAddress, pincode } = propertyForm.address;
+    if (!state || !city || !fullAddress || !pincode) {
+      setError('State, City, Full Address and Pincode are required');
       return;
     }
     if (!propertyForm.location.coordinates[0] || !propertyForm.location.coordinates[1]) {
@@ -769,7 +769,7 @@ const AddHostelWizard = () => {
     if (step === 1) {
       setPropertyForm(prev => ({ ...prev, propertyName: '', description: '', shortDescription: '' }));
     } else if (step === 2) {
-      updatePropertyForm('address', { country: 'India', state: '', city: '', area: '', fullAddress: '', pincode: '' });
+      updatePropertyForm('address', { state: '', city: '', fullAddress: '', pincode: '' });
       updatePropertyForm(['location', 'coordinates'], ['', '']);
     } else if (step === 3) {
       updatePropertyForm('amenities', []);
@@ -838,7 +838,7 @@ const AddHostelWizard = () => {
         <div className="h-full bg-emerald-600 transition-all duration-500 ease-out" style={{ width: `${(step / 9) * 100}%` }} />
       </div>
 
-      <main className="flex-1 w-full max-w-2xl mx-auto p-4 md:p-6 pb-32">
+      <main className="flex-1 w-full max-w-2xl mx-auto p-4 md:px-6 md:pt-6 pb-52 md:pb-80">
         <div className="mb-6">
           <h1 className="text-2xl font-extrabold text-gray-900 mb-2">{getStepTitle()}</h1>
         </div>
@@ -959,10 +959,7 @@ const AddHostelWizard = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500">Country</label>
-                  <input className="input" value={propertyForm.address.country} onChange={e => updatePropertyForm(['address', 'country'], e.target.value)} />
-                </div>
+
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-500">State / Province</label>
                   <input className="input" value={propertyForm.address.state} onChange={e => updatePropertyForm(['address', 'state'], e.target.value)} />
@@ -971,10 +968,7 @@ const AddHostelWizard = () => {
                   <label className="text-xs font-semibold text-gray-500">City</label>
                   <input className="input" value={propertyForm.address.city} onChange={e => updatePropertyForm(['address', 'city'], e.target.value)} />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500">Area / Sector</label>
-                  <input className="input" value={propertyForm.address.area} onChange={e => updatePropertyForm(['address', 'area'], e.target.value)} />
-                </div>
+
                 <div className="col-span-2 space-y-1">
                   <label className="text-xs font-semibold text-gray-500">Full Street Address</label>
                   <input className="input" value={propertyForm.address.fullAddress} onChange={e => updatePropertyForm(['address', 'fullAddress'], e.target.value)} />

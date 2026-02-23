@@ -218,7 +218,7 @@ const FilterBottomSheet = ({
                             <section ref={setSectionRef("HotelFacilities")}>
                                 <h3 className="font-bold text-lg text-surface mb-3">Property Facilities</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {["Parking", "Kitchen", "Security", "Power backup", "Wi-Fi", "Food Service"].map(fac => (
+                                    {["Parking", "Kitchen", "Security", "Power Backup", "Wi-Fi", "Food", "RO Water", "Gym", "Lift"].map(fac => (
                                         <button
                                             key={fac}
                                             onClick={() => toggleFilter(fac)}
@@ -237,7 +237,7 @@ const FilterBottomSheet = ({
                             <section ref={setSectionRef("RoomFacilities")}>
                                 <h3 className="font-bold text-lg text-surface mb-3">Features & Amenities</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {["TV", "AC", "Geyser", "East Facing", "West Facing", "Boundary Wall", "1 Seater", "2 Seater", "3 Seater"].map(fac => (
+                                    {["TV", "AC", "Geyser", "Fridge", "Laundry", "Housekeeping", "Single Occupancy", "Double Occupancy", "Triple Occupancy"].map(fac => (
                                         <button
                                             key={fac}
                                             onClick={() => toggleFilter(fac)}

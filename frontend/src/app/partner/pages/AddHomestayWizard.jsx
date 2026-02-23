@@ -80,7 +80,7 @@ const AddHomestayWizard = () => {
     familyFriendly: '',
     coverImage: '',
     propertyImages: [],
-    address: { country: '', state: '', city: '', area: '', fullAddress: '', pincode: '' },
+    address: { state: '', city: '', fullAddress: '', pincode: '' },
     location: { type: 'Point', coordinates: ['', ''] },
     nearbyPlaces: [],
     amenities: [],
@@ -776,7 +776,7 @@ const AddHomestayWizard = () => {
     if (step === 1) {
       setPropertyForm(prev => ({ ...prev, propertyName: '', description: '', shortDescription: '', hostLivesOnProperty: true, familyFriendly: true }));
     } else if (step === 2) {
-      updatePropertyForm('address', { country: 'India', state: 'Goa', city: '', area: '', fullAddress: '', pincode: '' });
+      updatePropertyForm('address', { state: '', city: '', fullAddress: '', pincode: '' });
       updatePropertyForm(['location', 'coordinates'], ['', '']);
     } else if (step === 3) {
       updatePropertyForm('amenities', []);
@@ -868,7 +868,7 @@ const AddHomestayWizard = () => {
         <div className="h-full bg-emerald-600 transition-all duration-500 ease-out" style={{ width: `${(step / 9) * 100}%` }} />
       </div>
 
-      <main className="flex-1 w-full max-w-2xl mx-auto p-4 md:p-6 pb-32">
+      <main className="flex-1 w-full max-w-2xl mx-auto p-4 md:px-6 md:pt-6 pb-52 md:pb-80">
         <div className="mb-6">
           <h1 className="text-2xl font-extrabold text-gray-900 mb-2">{getStepTitle()}</h1>
         </div>
@@ -962,10 +962,10 @@ const AddHomestayWizard = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <input className="input" placeholder="Country" value={propertyForm.address.country} onChange={e => updatePropertyForm(['address', 'country'], e.target.value)} />
+
                   <input className="input" placeholder="State/Province" value={propertyForm.address.state} onChange={e => updatePropertyForm(['address', 'state'], e.target.value)} />
                   <input className="input" placeholder="City" value={propertyForm.address.city} onChange={e => updatePropertyForm(['address', 'city'], e.target.value)} />
-                  <input className="input" placeholder="Area / Sector" value={propertyForm.address.area} onChange={e => updatePropertyForm(['address', 'area'], e.target.value)} />
+
                   <input className="input col-span-2" placeholder="Full Street Address" value={propertyForm.address.fullAddress} onChange={e => updatePropertyForm(['address', 'fullAddress'], e.target.value)} />
                   <input className="input" placeholder="Pincode / Zip" value={propertyForm.address.pincode} onChange={e => updatePropertyForm(['address', 'pincode'], e.target.value)} />
                 </div>

@@ -4,7 +4,7 @@ import { useLenis } from '../app/shared/hooks/useLenis';
 
 const HotelLayout = () => {
     // Initialize global smooth scrolling
-    useLenis();
+    // Lenis is initialized globally in App.jsx
 
     return (
         <div id="hotel-root" className="min-h-screen w-full bg-partner-bg text-partner-text-primary font-sans antialiased selection:bg-partner-btn selection:text-white">
