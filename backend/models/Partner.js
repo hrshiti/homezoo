@@ -73,8 +73,12 @@ const partnerSchema = new mongoose.Schema({
     startDate: { type: Date },
     expiryDate: { type: Date },
     propertiesAdded: { type: Number, default: 0 },
-    transactionId: { type: String }
+    transactionId: { type: String },
+    leadsUsedThisMonth: { type: Number, default: 0 },
+    isPaused: { type: Boolean, default: false },
+    pauseStartDate: { type: Date }
   },
+
 
   termsAccepted: { type: Boolean, default: false },
 

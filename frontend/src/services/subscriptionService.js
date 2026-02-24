@@ -43,7 +43,13 @@ const subscriptionService = {
     verifySubscription: async (paymentData) => {
         const response = await api.post('/subscriptions/verify', paymentData);
         return response.data;
+    },
+
+    togglePause: async () => {
+        const response = await api.post('/subscriptions/toggle-pause');
+        return response.data;
     }
 };
+
 
 export default subscriptionService;

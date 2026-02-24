@@ -32,7 +32,34 @@ const subscriptionPlanSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
     },
+    tier: {
+        type: String,
+        enum: ['silver', 'gold_basic', 'gold', 'platinum', 'diamond'],
+        required: true
+    },
+    leadCap: {
+        type: Number,
+        default: 0 // 0 for unlimited
+    },
+    hasVerifiedTag: {
+        type: Boolean,
+        default: false
+    },
+    bannerType: {
+        type: String,
+        enum: ['none', 'locality', 'city'],
+        default: 'none'
+    },
+    rankingWeight: {
+        type: Number,
+        default: 1 // Diamond=5, Platinum=4, Gold=3, GoldBasic=2, Silver=1
+    },
+    pauseDaysAllowed: {
+        type: Number,
+        default: 0
+    }
 }, { timestamps: true });
+
 
 const SubscriptionPlan = mongoose.model('SubscriptionPlan', subscriptionPlanSchema);
 export default SubscriptionPlan;

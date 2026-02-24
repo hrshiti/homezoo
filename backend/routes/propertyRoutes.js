@@ -10,14 +10,17 @@ import {
   getPublicProperties,
   getPropertyDetails,
   getMyProperties,
-  deleteProperty
+  deleteProperty,
+  revealContact
 } from '../controllers/propertyController.js';
 
 const router = express.Router();
 
 router.get('/', getPublicProperties);
 router.get('/my', protect, authorizedRoles('partner', 'admin'), getMyProperties);
+router.get('/:id/reveal-contact', revealContact);
 router.get('/:id', getPropertyDetails);
+
 router.post('/', protect, authorizedRoles('partner', 'admin'), createProperty);
 router.put('/:id', protect, authorizedRoles('partner', 'admin'), updateProperty);
 router.delete('/:id', protect, authorizedRoles('partner', 'admin'), deleteProperty);

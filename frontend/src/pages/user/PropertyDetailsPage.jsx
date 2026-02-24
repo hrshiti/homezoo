@@ -24,6 +24,8 @@ const PropertyDetailsPage = () => {
   const [taxRate, setTaxRate] = useState(0); // Fetched from backend
   const [availability, setAvailability] = useState(null);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const [revealedNumber, setRevealedNumber] = useState(null);
+  const [revealLoading, setRevealLoading] = useState(false);
 
   // Check Availability Logic
   const checkAvailability = async (directCall = false) => {
@@ -685,6 +687,23 @@ const PropertyDetailsPage = () => {
     toast.success('Coupon removed');
   };
 
+  const handleRevealContact = async () => {
+    if (revealLoading) return;
+    setRevealLoading(true);
+    try {
+      const response = await propertyService.revealContact(id);
+      if (response.success) {
+        setRevealedNumber(response.contactNumber);
+      } else {
+        toast.error(response.message || "Failed to reveal contact");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to reveal contact");
+    } finally {
+      setRevealLoading(false);
+    }
+  };
+
   return (
     <div className="bg-gray-50 min-h-screen pb-24 lg:pb-12 relative">
       {/* Header Image Gallery */}
@@ -1291,12 +1310,23 @@ const PropertyDetailsPage = () => {
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 w-full md:w-auto">
-                    <a
-                      href={`tel:${contactNumber}`}
+                    <button
+                      onClick={handleRevealContact}
+                      disabled={revealLoading}
                       className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-black text-center shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95 flex items-center justify-center gap-2"
                     >
-                      <Phone size={18} /> Call Now: {contactNumber}
-                    </a>
+                      {revealLoading ? <Loader2 className="animate-spin" size={18} /> : (
+                        <>
+                          <Phone size={18} />
+                          {revealedNumber ? `Call: ${revealedNumber}` : 'Reveal Contact Number'}
+                        </>
+                      )}
+                    </button>
+                    {revealedNumber && (
+                      <a href={`tel:${revealedNumber}`} className="text-center text-xs text-emerald-600 font-bold underline mt-1">
+                        Click to dial {revealedNumber}
+                      </a>
+                    )}
                     <p className="text-[10px] text-emerald-600 font-bold uppercase text-center mt-1 tracking-widest">
                       Verified Inquiries Only
                     </p>
@@ -1840,8 +1870,22 @@ const PropertyDetailsPage = () => {
                       </button>
 
                       {(['rent', 'buy', 'plot'].includes(propertyType?.toLowerCase())) && (
-                        <a href={`tel:${contactNumber}`} className="w-full py-3 bg-white border border-emerald-600 text-emerald-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-50 transition-all">
-                          <Phone size={18} /> Call {contactNumber}
+                        <button
+                          onClick={handleRevealContact}
+                          disabled={revealLoading}
+                          className="w-full py-3 bg-white border border-emerald-600 text-emerald-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-50 transition-all"
+                        >
+                          {revealLoading ? <Loader2 className="animate-spin" size={18} /> : (
+                            <>
+                              <Phone size={18} />
+                              {revealedNumber ? `Call: ${revealedNumber}` : 'Reveal Contact'}
+                            </>
+                          )}
+                        </button>
+                      )}
+                      {revealedNumber && (['rent', 'buy', 'plot'].includes(propertyType?.toLowerCase())) && (
+                        <a href={`tel:${revealedNumber}`} className="text-center text-xs text-emerald-600 font-medium underline">
+                          Dial {revealedNumber}
                         </a>
                       )}
                     </div>

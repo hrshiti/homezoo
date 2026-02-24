@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Star, IndianRupee, Heart } from 'lucide-react';
+import { MapPin, Star, IndianRupee, Heart, BadgeCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { userService } from '../../services/apiService';
 import toast from 'react-hot-toast';
@@ -183,9 +183,14 @@ const PropertyCard = ({ property, data, className = "", isSaved: initialIsSaved 
       <div className="p-3 flex flex-col gap-1.5">
         {/* Title */}
         <div className="mb-0">
-          <h3 className="font-bold text-sm text-gray-900 line-clamp-1 group-hover:text-emerald-700 transition-colors">
+          <h3 className="font-bold text-sm text-gray-900 line-clamp-1 group-hover:text-emerald-700 transition-colors flex items-center gap-1">
             {displayName}
+            {item.hasVerifiedTag && (
+              <BadgeCheck size={14} className="fill-blue-500 text-white shrink-0" />
+            )}
           </h3>
+
+
           <div className="flex items-center gap-1 text-gray-500 text-[10px] mt-0.5">
             <MapPin size={10} className="shrink-0 text-gray-400" />
             <span className="line-clamp-1 truncate">

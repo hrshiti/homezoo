@@ -14,9 +14,20 @@ try {
         });
     } else {
         console.warn("⚠️ Razorpay Keys missing. Subscription features will fail.");
+        // Fallback or Dummy for safety
+        razorpay = {
+            orders: {
+                create: () => Promise.reject(new Error("Razorpay Not Initialized - Keys Missing"))
+            }
+        };
     }
 } catch (err) {
     console.error("Razorpay Init Failed:", err.message);
+    razorpay = {
+        orders: {
+            create: () => Promise.reject(new Error("Razorpay Init Failed"))
+        }
+    };
 }
 
 // --- ADMIN CONTROLLERS ---
@@ -28,7 +39,11 @@ try {
  */
 export const createPlan = async (req, res) => {
     try {
-        const { name, maxProperties, price, durationDays, description, commissionPercentage } = req.body;
+        const {
+            name, maxProperties, price, durationDays, description,
+            commissionPercentage, tier, leadCap, hasVerifiedTag,
+            bannerType, rankingWeight, pauseDaysAllowed
+        } = req.body;
 
         const plan = await SubscriptionPlan.create({
             name,
@@ -36,7 +51,13 @@ export const createPlan = async (req, res) => {
             price,
             durationDays,
             description,
-            commissionPercentage: commissionPercentage || 10 // Default to 10% if not provided
+            commissionPercentage: commissionPercentage || 10,
+            tier,
+            leadCap: leadCap || 0,
+            hasVerifiedTag: hasVerifiedTag || false,
+            bannerType: bannerType || 'none',
+            rankingWeight: rankingWeight || 1,
+            pauseDaysAllowed: pauseDaysAllowed || 0
         });
 
         res.status(201).json({ success: true, plan });
@@ -151,13 +172,17 @@ export const createSubscriptionOrder = async (req, res) => {
         const options = {
             amount: amountInPaise,
             currency: PaymentConfig.currency || "INR",
-            receipt: `sub_${partnerId}_${Date.now()}`,
+            receipt: `sub_${Date.now()}`, // Keep receipt short (max 40 chars)
             notes: {
                 partnerId: partnerId.toString(),
                 planId: planId.toString(),
                 type: 'subscription_purchase'
             }
         };
+
+        if (!razorpay || !razorpay.orders) {
+            throw new Error("Razorpay provider not available");
+        }
 
         const order = await razorpay.orders.create(options);
 
@@ -174,7 +199,10 @@ export const createSubscriptionOrder = async (req, res) => {
 
     } catch (error) {
         console.error('Create Subscription Order Error:', error);
-        res.status(500).json({ success: false, message: 'Failed to create order' });
+        res.status(500).json({
+            success: false,
+            message: error.description || error.message || 'Failed to create order'
+        });
     }
 };
 
@@ -227,8 +255,10 @@ export const verifySubscription = async (req, res) => {
             status: 'active',
             startDate: new Date(),
             expiryDate: expiryDate,
-            propertiesAdded: partner.subscription?.propertiesAdded || 0, // Keep existing count
-            transactionId: razorpay_payment_id
+            propertiesAdded: partner.subscription?.propertiesAdded || 0,
+            transactionId: razorpay_payment_id,
+            leadsUsedThisMonth: 0, // Reset/Initialize leads
+            isPaused: false
         };
 
         await partner.save();
@@ -242,5 +272,52 @@ export const verifySubscription = async (req, res) => {
     } catch (error) {
         console.error('Verify Subscription Error:', error);
         res.status(500).json({ success: false, message: 'Payment verification failed' });
+    }
+};
+/**
+ * @desc    Toggle Subscription Pause (For Gold Plan)
+ * @route   POST /api/subscriptions/toggle-pause
+ * @access  Private (Partner)
+ */
+export const toggleSubscriptionPause = async (req, res) => {
+    try {
+        const partnerId = req.user._id || req.user.id;
+        const partner = await Partner.findById(partnerId).populate('subscription.planId');
+
+        if (!partner || !partner.subscription.planId) {
+            return res.status(404).json({ message: 'Active subscription not found' });
+        }
+
+        const plan = partner.subscription.planId;
+        if (plan.tier !== 'gold' || plan.pauseDaysAllowed <= 0) {
+            return res.status(403).json({ message: 'Pause not allowed for this plan' });
+        }
+
+        const currentlyPaused = partner.subscription.isPaused;
+
+        if (currentlyPaused) {
+            // Resume: We should theoretically extend the expiry date by the duration it was paused
+            const pauseStart = partner.subscription.pauseStartDate;
+            const pauseDurationMs = new Date() - new Date(pauseStart);
+
+            partner.subscription.expiryDate = new Date(new Date(partner.subscription.expiryDate).getTime() + pauseDurationMs);
+            partner.subscription.isPaused = false;
+            partner.subscription.pauseStartDate = null;
+        } else {
+            // Pause
+            partner.subscription.isPaused = true;
+            partner.subscription.pauseStartDate = new Date();
+        }
+
+        await partner.save();
+        res.json({
+            success: true,
+            message: currentlyPaused ? 'Subscription resumed' : 'Subscription paused',
+            subscription: partner.subscription
+        });
+
+    } catch (error) {
+        console.error('Toggle Pause Error:', error);
+        res.status(500).json({ success: false, message: 'Failed to toggle pause' });
     }
 };

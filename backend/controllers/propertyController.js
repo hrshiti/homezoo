@@ -614,6 +614,34 @@ export const getPublicProperties = async (req, res) => {
       pipeline.push({ $match: matchConditions });
     }
 
+    // --- SUBSCRIPTION RANKING BOOST ---
+    pipeline.push(
+      {
+        $lookup: {
+          from: 'partners',
+          localField: 'partnerId',
+          foreignField: '_id',
+          as: 'partner'
+        }
+      },
+      { $unwind: { path: '$partner', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'subscriptionplans',
+          localField: 'partner.subscription.planId',
+          foreignField: '_id',
+          as: 'plan'
+        }
+      },
+      { $unwind: { path: '$plan', preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          rankingWeight: { $ifNull: ['$plan.rankingWeight', 0] },
+          hasVerifiedTag: { $ifNull: ['$plan.hasVerifiedTag', false] }
+        }
+      }
+    );
+
     // 3. Lookup Room Types (For Price & Guest Capacity)
     // Use dynamic collection name for robustness
     const roomTypeCollection = RoomType.collection.name;
@@ -688,13 +716,13 @@ export const getPublicProperties = async (req, res) => {
     }
 
     // 7. Sorting
-    let sortStage = { createdAt: -1 }; // Default new
+    let sortStage = { rankingWeight: -1, createdAt: -1 }; // Priority: Weight then Newest
     if (sort) {
-      if (sort === 'newest') sortStage = { createdAt: -1 };
-      if (sort === 'price_low') sortStage = { startingPrice: 1 };
-      if (sort === 'price_high') sortStage = { startingPrice: -1 };
-      if (sort === 'rating') sortStage = { avgRating: -1 };
-      if (sort === 'distance' && lat && lng) sortStage = { distance: 1 };
+      if (sort === 'newest') sortStage = { rankingWeight: -1, createdAt: -1 };
+      if (sort === 'price_low') sortStage = { startingPrice: 1, rankingWeight: -1 };
+      if (sort === 'price_high') sortStage = { startingPrice: -1, rankingWeight: -1 };
+      if (sort === 'rating') sortStage = { avgRating: -1, rankingWeight: -1 };
+      if (sort === 'distance' && lat && lng) sortStage = { distance: 1, rankingWeight: -1 };
     }
 
     pipeline.push({ $sort: sortStage });
@@ -760,3 +788,54 @@ export const deleteProperty = async (req, res) => {
     res.status(500).json({ message: 'Failed to delete property' });
   }
 };
+
+/**
+ * @desc    Get Property Contact Details (Enforces Lead Capping)
+ * @route   GET /api/properties/:id/reveal-contact
+ * @access  Public (Optional Login)
+ */
+export const revealContact = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const property = await Property.findById(id).populate({
+      path: 'partnerId',
+      populate: { path: 'subscription.planId' }
+    });
+
+    if (!property) return res.status(404).json({ message: 'Property not found' });
+
+    const partner = property.partnerId;
+    if (!partner) return res.status(404).json({ message: 'Partner details missing' });
+
+    const sub = partner.subscription;
+    const plan = sub?.planId;
+
+    // Check if partner is active and has a plan
+    if (sub?.status === 'active' && plan) {
+      // Logic for Silver Tier Lead Capping
+      if (plan.tier === 'silver' && plan.leadCap > 0) {
+        if ((sub.leadsUsedThisMonth || 0) >= plan.leadCap) {
+          return res.status(403).json({
+            success: false,
+            message: 'Partner lead limit reached. Try another property.',
+            limitReached: true
+          });
+        }
+      }
+
+      // Increment leads count
+      partner.subscription.leadsUsedThisMonth = (sub.leadsUsedThisMonth || 0) + 1;
+      await partner.save();
+    }
+
+    res.json({
+      success: true,
+      contactNumber: property.contactNumber
+    });
+
+  } catch (error) {
+    console.error('Reveal Contact Error:', error);
+    res.status(500).json({ message: 'Failed to reveal contact' });
+  }
+};
+

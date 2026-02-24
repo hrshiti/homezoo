@@ -327,7 +327,16 @@ export const propertyService = {
       throw error.response?.data || error.message;
     }
   },
+  revealContact: async (id) => {
+    try {
+      const response = await api.get(`/properties/${id}/reveal-contact`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
 };
+
 
 // Hotel Services (Updated)
 export const hotelService = {
