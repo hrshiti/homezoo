@@ -42,6 +42,12 @@ const reelSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    category: {
+      type: String,
+      enum: ['PG', 'Rent', 'Buy', 'Plot', 'General'],
+      default: 'General',
+      index: true,
+    }
   },
   { timestamps: true }
 );

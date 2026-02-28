@@ -4,6 +4,7 @@ import { Plus, X, Loader2, ArrowLeft } from 'lucide-react';
 import ReelCard from '../../components/reels/ReelCard';
 import ReelCommentsSheet from '../../components/reels/ReelCommentsSheet';
 import { reelService } from '../../services/reelService';
+import { isFlutterApp, pickVideo } from '../../utils/flutterBridge';
 import toast from 'react-hot-toast';
 
 const MAX_DURATION_SEC = 10;
@@ -23,6 +24,7 @@ export default function ReelsPage() {
   const [uploadCaption, setUploadCaption] = useState('');
   const [selectedFileName, setSelectedFileName] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('General');
   const fileInputRef = useRef(null);
   const containerRef = useRef(null);
   const viewReportedRef = useRef(new Set());
@@ -148,13 +150,14 @@ export default function ReelsPage() {
         setUploading(false);
         return;
       }
-      const res = await reelService.uploadReel(file, uploadCaption.trim());
+      const res = await reelService.uploadReel(file, uploadCaption.trim(), selectedCategory);
       const newReel = { ...res.reel, likedByMe: false };
       setReels((prev) => [newReel, ...prev]);
       setUploadOpen(false);
       setUploadCaption('');
       setSelectedFileName('');
       setSelectedFile(null);
+      setSelectedCategory('General');
       if (fileInputRef.current) fileInputRef.current.value = '';
       toast.success('Reel uploaded!');
     } catch (err) {
@@ -166,7 +169,22 @@ export default function ReelsPage() {
   };
 
   const handleUploadClick = () => {
-    fileInputRef.current?.click();
+    if (isFlutterApp()) {
+      pickVideo(
+        (file) => {
+          setSelectedFile(file);
+          setSelectedFileName(file.name);
+          setUploadOpen(true);
+        },
+        (err) => {
+          console.error('[Flutter Video Pick Error]', err);
+          // Fallback to regular picker if bridge fails
+          fileInputRef.current?.click();
+        }
+      );
+    } else {
+      fileInputRef.current?.click();
+    }
   };
 
   const handleFileSelected = (e) => {
@@ -336,6 +354,28 @@ export default function ReelsPage() {
                     {uploadCaption.length}/{MAX_CAPTION_LENGTH}
                   </p>
                 </div>
+
+                {/* Hashtag Selection */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Select Category
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {['PG', 'Rent', 'Buy', 'Plot', 'General'].map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${selectedCategory === cat
+                          ? 'bg-surface text-white border-surface'
+                          : 'bg-white text-gray-500 border-gray-200 hover:border-surface/50'
+                          }`}
+                      >
+                        #{cat.toLowerCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="flex gap-3">
                   <button
                     type="button"
@@ -464,6 +504,29 @@ export default function ReelsPage() {
                   {uploadCaption.length}/{MAX_CAPTION_LENGTH}
                 </p>
               </div>
+
+              {/* Hashtag Selection */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Select Category
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {['PG', 'Rent', 'Buy', 'Plot', 'General'].map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${selectedCategory === cat
+                        ? 'bg-surface text-white border-surface'
+                        : 'bg-white text-gray-500 border-gray-200 hover:border-surface/50'
+                        }`}
+                    >
+                      #{cat.toLowerCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex gap-3">
                 <button
                   type="button"
@@ -472,6 +535,7 @@ export default function ReelsPage() {
                     setUploadCaption('');
                     setSelectedFileName('');
                     setSelectedFile(null);
+                    setSelectedCategory('General');
                     if (fileInputRef.current) fileInputRef.current.value = '';
                   }}
                   className="flex-1 py-3 rounded-xl border border-gray-200 font-semibold text-gray-700"

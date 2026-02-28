@@ -595,11 +595,24 @@ export const getPublicProperties = async (req, res) => {
     if (gender) {
       const genderList = gender.split(',').map(g => new RegExp(`^${g.trim()}$`, 'i'));
       // Check both pgType (old) and pgDetails.gender (new)
-      matchConditions.$or = matchConditions.$or || [];
-      matchConditions.$or.push(
-        { pgType: { $in: genderList } },
-        { 'pgDetails.gender': { $in: genderList } }
-      );
+      const genderMatch = {
+        $or: [
+          { pgType: { $in: genderList } },
+          { 'pgDetails.gender': { $in: genderList } }
+        ]
+      };
+
+      if (matchConditions.$and) {
+        matchConditions.$and.push(genderMatch);
+      } else if (matchConditions.$or) {
+        // If we have a global $or (from search), we must move it to $and to keep boolean logic correct
+        const existingOr = matchConditions.$or;
+        delete matchConditions.$or;
+        matchConditions.$and = [{ $or: existingOr }, genderMatch];
+      } else {
+        // No search/other $or, just use genderMatch $or
+        matchConditions.$or = genderMatch.$or;
+      }
     }
     if (occupancy) {
       const occList = occupancy.split(',').map(o => new RegExp(`^${o.trim()}$`, 'i'));
@@ -608,6 +621,10 @@ export const getPublicProperties = async (req, res) => {
     if (landType) {
       const landList = landType.split(',').map(l => new RegExp(`^${l.trim()}$`, 'i'));
       matchConditions['plotDetails.landType'] = { $in: landList };
+    }
+
+    if (req.query.foodIncluded === 'true') {
+      matchConditions['pgDetails.foodIncluded'] = true;
     }
 
     if (Object.keys(matchConditions).length > 0) {

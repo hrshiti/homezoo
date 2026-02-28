@@ -84,7 +84,7 @@ const plans = [
 
 const seedPlans = async () => {
     try {
-        await mongoose.connect(process.env.MONGODB_URI);
+        await mongoose.connect(process.env.MONGODB_URL);
         console.log('Connected to MongoDB');
 
         // Optional: Clear existing plans if you want a fresh start

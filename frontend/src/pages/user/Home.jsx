@@ -4,6 +4,8 @@ import HeroSection from '../../components/user/HeroSection';
 import ExclusiveOffers from '../../components/user/ExclusiveOffers';
 import PropertyTypeFilter from '../../components/user/PropertyTypeFilter';
 import PropertyFeed from '../../components/user/PropertyFeed';
+import CollectionSection from '../../components/user/CollectionSection';
+import ReelSection from '../../components/user/ReelSection';
 import { categoryService } from '../../services/categoryService';
 
 // Category Theme Map - Professional palettes inspired by Housing.com
@@ -42,6 +44,7 @@ const THEME_MAP = {
 
 const Home = () => {
     const [selectedType, setSelectedType] = useState({ id: null, label: 'All' });
+    const [pgFilters, setPgFilters] = useState({ gender: undefined, occupancy: undefined, foodIncluded: undefined });
     const [sectionIds, setSectionIds] = useState({ pg: null, rent: null, buy: null, plot: null });
 
     // Fetch Category IDs for the homepage sections
@@ -80,6 +83,8 @@ const Home = () => {
 
     const handleTypeSelect = (id, label) => {
         setSelectedType({ id, label });
+        // Reset PG filters when switching tabs
+        setPgFilters({ gender: undefined, occupancy: undefined, foodIncluded: undefined });
     };
 
     const pageBg = activeTheme.pageBg || '#f8fafc';
@@ -158,6 +163,10 @@ const Home = () => {
                                 typeId={sectionIds.pg}
                             />
                         )}
+
+                        {/* YouTube style Reels Section */}
+                        <ReelSection category={selectedType.label} />
+
                         {sectionIds.rent && (
                             <HomeSection
                                 title="Properties for Rent"
@@ -182,7 +191,16 @@ const Home = () => {
                     </div>
                 ) : (
                     // Show Filtered Grid when a specific category is selected
-                    <PropertyFeed selectedType={selectedType.id} viewMode="grid" />
+                    <div className="flex flex-col gap-1">
+                        {selectedType.label === 'PG/Co-Living' && (
+                            <CollectionSection onFilter={(filters) => setPgFilters(filters)} activeFilters={pgFilters} />
+                        )}
+
+                        {/* Reels for specific Category */}
+                        <ReelSection category={selectedType.label} />
+
+                        <PropertyFeed selectedType={selectedType.id} viewMode="grid" extraFilters={pgFilters} />
+                    </div>
                 )}
             </div>
         </main>

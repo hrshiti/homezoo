@@ -24,6 +24,9 @@ const SearchPage = () => {
         const genderFromUrl = searchParams.get('gender')?.split(',') || [];
         const occupancyFromUrl = searchParams.get('occupancy')?.split(',') || [];
         const landTypeFromUrl = searchParams.get('landType')?.split(',') || [];
+        const foodFromUrl = searchParams.get('foodIncluded') === 'true';
+
+        if (foodFromUrl) amsFromUrl.push('Food');
 
         // Map back to UI labels
         bhksFromUrl.forEach(v => {
@@ -63,7 +66,8 @@ const SearchPage = () => {
             maxPrice: searchParams.get('maxPrice') || '',
             sort: searchParams.get('sort') || 'newest',
             amenities: [...new Set(amsFromUrl)],
-            radius: parseInt(searchParams.get('radius')) || 50
+            radius: parseInt(searchParams.get('radius')) || 50,
+            foodIncluded: searchParams.get('foodIncluded') === 'true'
         };
     };
 
@@ -260,6 +264,8 @@ const SearchPage = () => {
             else if (am === 'Commercial') landTypes.push('Commercial');
             else if (am === 'Agricultural') landTypes.push('Agricultural');
             else if (am === 'Industrial') landTypes.push('Industrial');
+
+            else if (am === 'Food') params.foodIncluded = 'true';
 
             else finalAmenities.push(am);
         });

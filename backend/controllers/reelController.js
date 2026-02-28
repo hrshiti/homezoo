@@ -56,6 +56,7 @@ export const uploadReel = async (req, res) => {
       videoUrl: uploadResult.url,
       thumbnailUrl,
       caption,
+      category: req.body.category || 'General',
       videoPublicId: uploadResult.publicId,
     });
 
@@ -83,7 +84,11 @@ export const getFeed = async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit, 10) || 10, 20);
     const cursor = req.query.cursor;
-    const query = cursor ? { _id: { $lt: new mongoose.Types.ObjectId(cursor) } } : {};
+    const category = req.query.category;
+
+    let query = {};
+    if (cursor) query._id = { $lt: new mongoose.Types.ObjectId(cursor) };
+    if (category && category !== 'All') query.category = category;
 
     const reels = await Reel.find(query)
       .sort({ createdAt: -1 })

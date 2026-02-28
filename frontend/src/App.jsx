@@ -265,6 +265,7 @@ const PartnerProtectedRoute = ({ children }) => {
       '/hotel/partner-dashboard',
       '/hotel/join',
       '/hotel/profile',
+      '/hotel/subscriptions',
       '/hotel/join-hotel',
       '/hotel/join-resort',
       '/hotel/join-hostel',

@@ -3,7 +3,7 @@ import { propertyService, userService } from '../../services/apiService';
 import PropertyCard from './PropertyCard';
 import { Loader2 } from 'lucide-react';
 
-const PropertyFeed = ({ selectedType, selectedCity, viewMode = 'grid', limit }) => {
+const PropertyFeed = ({ selectedType, selectedCity, viewMode = 'grid', limit, extraFilters = {} }) => {
   const [properties, setProperties] = useState([]);
   const [savedHotelIds, setSavedHotelIds] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,6 +15,13 @@ const PropertyFeed = ({ selectedType, selectedCity, viewMode = 'grid', limit }) 
       setError(null);
       try {
         const filters = {};
+        // Add extra filters only if they have a value
+        Object.keys(extraFilters).forEach(key => {
+          if (extraFilters[key] !== undefined && extraFilters[key] !== null) {
+            filters[key] = extraFilters[key];
+          }
+        });
+
         // Only add type filter if a specific category is selected (not null/empty/All)
         if (selectedType && selectedType !== 'All' && selectedType !== null && selectedType !== '') {
           filters.type = selectedType;
@@ -48,7 +55,7 @@ const PropertyFeed = ({ selectedType, selectedCity, viewMode = 'grid', limit }) 
     };
 
     fetchPropertiesAndSaved();
-  }, [selectedType, selectedCity]);
+  }, [selectedType, selectedCity, JSON.stringify(extraFilters)]);
 
   if (loading) {
     return (
@@ -78,7 +85,7 @@ const PropertyFeed = ({ selectedType, selectedCity, viewMode = 'grid', limit }) 
 
   if (viewMode === 'carousel') {
     return (
-      <div className="px-5 pb-1 flex overflow-x-auto gap-4 no-scrollbar snap-x snap-mandatory py-2 -mx-5 px-5 md:mx-0 md:px-0">
+      <div className="flex overflow-x-auto gap-4 no-scrollbar snap-x snap-mandatory py-2 -mx-5 px-5 md:mx-0 md:px-0 pb-1">
         {displayedProperties.map(property => (
           <PropertyCard
             key={property._id}
@@ -94,7 +101,7 @@ const PropertyFeed = ({ selectedType, selectedCity, viewMode = 'grid', limit }) 
   }
 
   return (
-    <div className="px-5 pb-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className="px-3.5 md:px-5 pb-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
       {displayedProperties.map(property => (
         <PropertyCard
           key={property._id}

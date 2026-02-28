@@ -89,6 +89,10 @@ const PropertyCard = ({ property, data, className = "", isSaved: initialIsSaved 
   const rawPrice =
     startingPrice ??
     item.startingPrice ??
+    item.rentDetails?.monthlyRent ??
+    item.pgDetails?.monthlyRent ??
+    item.buyDetails?.expectedPrice ??
+    item.plotDetails?.expectedPrice ??
     item.minPrice ??
     item.min_price ??
     item.price ??
@@ -150,80 +154,140 @@ const PropertyCard = ({ property, data, className = "", isSaved: initialIsSaved 
         />
 
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-70" />
 
         {/* Floating Badges */}
-        <div className="absolute top-2.5 left-2.5 flex gap-2">
-          {typeLabel && (
-            <span className={`px-2 py-0.5 rounded-[4px] text-[9px] font-bold uppercase tracking-wide shadow-sm ${getTypeColor(badgeTypeKey)}`}>
-              {typeLabel}
+        <div className="absolute top-2.5 left-2.5 flex flex-col items-start gap-1.5">
+          <div className="flex items-center gap-1.5">
+            {typeLabel && (
+              <span className={`px-2 py-0.5 rounded-[4px] text-[9px] font-bold uppercase tracking-wide shadow-sm flex items-center gap-1 ${getTypeColor(badgeTypeKey)}`}>
+                {typeLabel}
+              </span>
+            )}
+            {item.hasVerifiedTag && (
+              <div className="bg-white/90 backdrop-blur-sm p-0.5 rounded-full shadow-sm">
+                <BadgeCheck size={14} className="fill-blue-500 text-white" />
+              </div>
+            )}
+          </div>
+
+          {/* Subscription/Premium Tag */}
+          {(item.rankingWeight > 0 || item.isFeatured) && (
+            <span className="bg-[#FFD700] text-black px-2 py-0.5 rounded-[4px] text-[8px] font-black uppercase tracking-wider shadow-md border border-white/20 flex items-center gap-1 animate-pulse-slow">
+              <Star size={10} className="fill-black" />
+              PREMIUM Listing
             </span>
           )}
         </div>
 
-        {/* Wishlist Button */}
-        <button
-          onClick={handleToggleSave}
-          className="absolute top-2.5 right-2.5 p-1.5 bg-white rounded-full shadow-md z-20 hover:bg-gray-50 active:scale-95 transition-all group-hover:block"
-        >
-          <Heart
-            size={16}
-            className={`${isSaved ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
-          />
-        </button>
+        {/* Top Right: Wishlist & Rating */}
+        <div className="absolute top-2.5 right-2.5 flex flex-col gap-2 items-end">
+          <button
+            onClick={handleToggleSave}
+            className="p-1.5 bg-white/90 backdrop-blur-sm rounded-full shadow-md z-20 hover:bg-white active:scale-95 transition-all"
+          >
+            <Heart
+              size={14}
+              className={`${isSaved ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+            />
+          </button>
 
-        {/* Rating Badge */}
-        <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1 bg-white/95 backdrop-blur-md px-1.5 py-0.5 rounded-[4px] shadow-sm text-[10px] font-bold text-gray-800">
-          <span className="text-green-600 font-extrabold">{displayRating}</span>
-          <Star size={9} className="fill-green-600 text-green-600" />
+          <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-[4px] shadow-sm text-[10px] font-bold text-gray-800">
+            <span className="text-green-600 font-extrabold">{displayRating}</span>
+            <Star size={9} className="fill-green-600 text-green-600" />
+          </div>
         </div>
       </div>
 
-      {/* Content Section - Compact */}
-      <div className="p-3 flex flex-col gap-1.5">
-        {/* Title */}
-        <div className="mb-0">
-          <h3 className="font-bold text-sm text-gray-900 line-clamp-1 group-hover:text-emerald-700 transition-colors flex items-center gap-1">
+      {/* Content Section - Compact & Optimized */}
+      <div className="p-2.5 flex flex-col gap-1">
+        {/* Title & Info */}
+        <div>
+          <h3 className="font-bold text-sm text-gray-900 line-clamp-1 group-hover:text-emerald-700 transition-colors">
             {displayName}
-            {item.hasVerifiedTag && (
-              <BadgeCheck size={14} className="fill-blue-500 text-white shrink-0" />
-            )}
           </h3>
 
-
           <div className="flex items-center gap-1 text-gray-500 text-[10px] mt-0.5">
-            <MapPin size={10} className="shrink-0 text-gray-400" />
+            <MapPin size={9} className="shrink-0 text-gray-400" />
             <span className="line-clamp-1 truncate">
-              {address?.city || item.city}, {address?.state || item.state || 'India'}
-            </span>
-          </div>
-        </div>
-
-        {/* Price Section */}
-        <div className="mt-1 flex items-baseline gap-0.5">
-          <IndianRupee size={15} className="text-gray-900 -mr-0.5 self-center" strokeWidth={2.5} />
-          <span className="text-lg font-bold text-gray-900 tracking-tight">
-            {formattedPrice}
-          </span>
-          {displayPrice && (
-            <span className="text-[10px] text-gray-500 font-medium ml-1">
-              {priceSuffix}
-            </span>
-          )}
-        </div>
-
-        {/* Bottom Action / Footer */}
-        <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between">
-          <div className="flex gap-2 text-[10px] text-gray-500 font-medium">
-            <span className="bg-gray-50 px-1.5 py-0.5 rounded text-gray-600">
-              See Details
+              {address?.city || item.city || 'Indore'}, {address?.state || item.state || 'Madhya Pradesh'}
             </span>
           </div>
 
-          <button className="text-xs font-bold text-emerald-600 hover:text-emerald-700 transition-colors flex items-center gap-0.5 group/btn">
-            View
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transform group-hover/btn:translate-x-1 transition-transform"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-          </button>
+          {/* Quick Specs - Compact Badges */}
+          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+            {/* Rent/Sale Type */}
+            {(item.rentDetails?.type || item.rentDetails?.bhkType || item.bhkType || item.bhk || item.roomType) ? (
+              <span className="bg-emerald-50 text-emerald-700 px-1 py-0.5 rounded text-[9px] font-bold border border-emerald-100">
+                {item.rentDetails?.type || item.rentDetails?.bhkType || item.bhkType || item.bhk || item.roomType}
+              </span>
+            ) : badgeTypeKey === 'Rent' ? (
+              <span className="bg-emerald-50 text-emerald-700 px-1 py-0.5 rounded text-[9px] font-bold border border-emerald-100">
+                RENT PROPERTY
+              </span>
+            ) : null}
+
+            {/* Buy Type */}
+            {badgeTypeKey === 'Buy' && (item.buyDetails?.type || item.buyDetails?.area?.superBuiltUp) && (
+              <span className="bg-blue-50 text-blue-700 px-1 py-0.5 rounded text-[9px] font-bold border border-blue-100">
+                {item.buyDetails?.type || `${item.buyDetails?.area?.superBuiltUp} ${item.buyDetails?.area?.unit || 'sqft'}`}
+              </span>
+            )}
+
+            {/* PG/Gender */}
+            {(badgeTypeKey === 'PG' || badgeTypeKey === 'Hostel') && (item.pgDetails?.gender || item.pgType) && (
+              <span className="bg-rose-50 text-rose-700 px-1 py-0.5 rounded text-[9px] font-bold border border-rose-100 italic">
+                {item.pgDetails?.gender || item.pgType}
+              </span>
+            )}
+
+            {/* Furnishing */}
+            {(item.rentDetails?.furnishing || item.furnishing) && (
+              <span className="text-[9px] text-gray-500 font-medium">
+                • {item.rentDetails?.furnishing || item.furnishing}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Price & Actions Row - Integrated */}
+        <div className="mt-1.5 pt-2 border-t border-gray-50 flex items-center justify-between">
+          <div className="flex flex-col">
+            <div className="flex items-baseline gap-0.5">
+              <IndianRupee size={13} className="text-gray-900" strokeWidth={2.5} />
+              <span className="text-base font-bold text-gray-900 tracking-tight">
+                {formattedPrice}
+              </span>
+              {displayPrice && (
+                <span className="text-[9px] text-gray-500 font-medium ml-0.5">
+                  {priceSuffix}
+                </span>
+              )}
+            </div>
+            {['PG', 'Hostel', 'Rent'].includes(badgeTypeKey) && displayPrice && (
+              <span className="text-[8px] text-emerald-600 font-bold uppercase tracking-tighter -mt-0.5">Monthly Rent</span>
+            )}
+            {badgeTypeKey === 'Buy' && displayPrice && (
+              <span className="text-[8px] text-blue-600 font-bold uppercase tracking-tighter -mt-0.5">Total Price</span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {(item.contactNumber || item.phoneNumber) && (
+              <a
+                href={`tel:${item.contactNumber || item.phoneNumber}`}
+                className="p-1.5 bg-emerald-50 text-emerald-600 rounded-md hover:bg-emerald-100 transition-colors"
+                onClick={(e) => e.stopPropagation()}
+                title="Call Now"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+              </a>
+            )}
+            <button className="text-[10px] font-bold text-white bg-emerald-600 px-3 py-1.5 rounded-md hover:bg-emerald-700 transition-colors flex items-center gap-1 shadow-sm">
+              View
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>

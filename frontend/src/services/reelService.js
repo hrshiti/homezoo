@@ -6,10 +6,11 @@ export const reelService = {
 
     getReelById: (id) => api.get(`/reels/${id}`).then((r) => r.data),
 
-    uploadReel: (file, caption = '') => {
+    uploadReel: (file, caption = '', category = 'General') => {
         const formData = new FormData();
         formData.append('video', file);
         formData.append('caption', caption != null ? String(caption).trim().slice(0, 500) : '');
+        formData.append('category', category);
         return api
             .post('/reels/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
