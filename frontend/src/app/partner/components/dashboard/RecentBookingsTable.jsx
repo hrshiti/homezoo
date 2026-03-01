@@ -53,7 +53,9 @@ const RecentBookingsTable = ({ bookings }) => {
                     ${booking.bookingStatus === 'cancelled' || booking.bookingStatus === 'rejected' ? 'bg-red-100 text-red-700' : ''}
                     ${booking.bookingStatus === 'completed' || booking.bookingStatus === 'checked_out' ? 'bg-blue-100 text-blue-700' : ''}
                 `}>
-                  {booking.bookingStatus}
+                  {booking.bookingStatus === 'checked_in' ? 'ONGOING' :
+                    booking.bookingStatus === 'checked_out' ? 'COMPLETED' :
+                      booking.bookingStatus}
                 </span>
               </div>
 
@@ -153,7 +155,9 @@ const RecentBookingsTable = ({ bookings }) => {
                                           ${booking.bookingStatus === 'cancelled' || booking.bookingStatus === 'rejected' ? 'bg-red-100 text-red-700' : ''}
                                           ${booking.bookingStatus === 'completed' || booking.bookingStatus === 'checked_out' ? 'bg-blue-100 text-blue-700' : ''}
                                       `}>
-                      {(booking.bookingStatus || 'unknown').toUpperCase()}
+                      {booking.bookingStatus === 'checked_in' ? 'ONGOING' :
+                        booking.bookingStatus === 'checked_out' ? 'COMPLETED' :
+                          (booking.bookingStatus || 'unknown').toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4">

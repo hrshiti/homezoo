@@ -6,6 +6,8 @@ import PropertyTypeFilter from '../../components/user/PropertyTypeFilter';
 import PropertyFeed from '../../components/user/PropertyFeed';
 import CollectionSection from '../../components/user/CollectionSection';
 import ReelSection from '../../components/user/ReelSection';
+import LatestProjectsBanner from '../../components/user/LatestProjectsBanner';
+import RecommendedSellers from '../../components/user/RecommendedSellers';
 import { categoryService } from '../../services/categoryService';
 
 // Category Theme Map - Professional palettes inspired by Housing.com
@@ -164,6 +166,9 @@ const Home = () => {
                             />
                         )}
 
+                        {/* Recommendation for All view */}
+                        <RecommendedSellers />
+
                         {/* YouTube style Reels Section */}
                         <ReelSection category={selectedType.label} />
 
@@ -192,13 +197,24 @@ const Home = () => {
                 ) : (
                     // Show Filtered Grid when a specific category is selected
                     <div className="flex flex-col gap-1">
+                        {/* 1. Latest Projects Banner for the category */}
+                        <LatestProjectsBanner
+                            categoryId={selectedType.id}
+                            categoryName={selectedType.label}
+                            theme={activeTheme}
+                        />
+
                         {selectedType.label === 'PG/Co-Living' && (
                             <CollectionSection onFilter={(filters) => setPgFilters(filters)} activeFilters={pgFilters} />
                         )}
 
-                        {/* Reels for specific Category */}
+                        {/* 2. Reels for specific Category */}
                         <ReelSection category={selectedType.label} />
 
+                        {/* 3. Recommended Sellers for the category */}
+                        <RecommendedSellers />
+
+                        {/* 4. Main Property Feed */}
                         <PropertyFeed selectedType={selectedType.id} viewMode="grid" extraFilters={pgFilters} />
                     </div>
                 )}

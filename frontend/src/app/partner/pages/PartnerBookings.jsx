@@ -32,7 +32,7 @@ const BookingCard = ({ booking }) => {
         }
 
         if (s === 'confirmed') return { color: 'text-blue-600 bg-blue-50 border-blue-100', label: isPG ? 'Booked' : 'Confirmed' };
-        if (s === 'checked_in') return { color: 'text-purple-600 bg-purple-50 border-purple-100', label: isPG || isRent ? 'Active Tenant' : 'In-House' };
+        if (s === 'checked_in') return { color: 'text-purple-600 bg-purple-50 border-purple-100', label: isPG || isRent ? 'Active Tenant' : 'Ongoing' };
         if (s === 'checked_out' || s === 'completed') return { color: 'text-emerald-600 bg-emerald-50 border-emerald-100', label: 'Completed' };
         if (s === 'cancelled') return { color: 'text-red-500 bg-red-50 border-red-100', label: 'Cancelled' };
         if (s === 'no_show') return { color: 'text-gray-500 bg-gray-100 border-gray-200', label: 'No Show' };
@@ -180,9 +180,9 @@ const PartnerBookings = () => {
     const filteredBookings = bookings;
 
     const tabs = [
-        { id: 'upcoming', label: 'Upcoming / New' },
-        { id: 'in_house', label: 'In-House / Active' },
-        { id: 'completed', label: 'Past / Sold' },
+        { id: 'upcoming', label: 'New Leads' },
+        { id: 'in_house', label: 'Ongoing' },
+        { id: 'completed', label: 'Completed' },
         { id: 'cancelled', label: 'Cancelled' },
     ];
 

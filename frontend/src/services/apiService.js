@@ -319,6 +319,14 @@ export const propertyService = {
       throw error.response?.data || error.message;
     }
   },
+  getRecommendedSellers: async () => {
+    try {
+      const response = await api.get('/properties/recommended-sellers');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
   getDetails: async (id) => {
     try {
       const response = await api.get(`/properties/${id}`);

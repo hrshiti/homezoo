@@ -856,3 +856,76 @@ export const revealContact = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Get Recommended Sellers (Partners with Premium Plans & High Activity)
+ * @route   GET /api/properties/recommended-sellers
+ * @access  Public
+ */
+export const getRecommendedSellers = async (req, res) => {
+  try {
+    const pipeline = [
+      {
+        $match: {
+          partnerApprovalStatus: 'approved',
+          'subscription.status': 'active'
+        }
+      },
+      {
+        $lookup: {
+          from: 'subscriptionplans',
+          localField: 'subscription.planId',
+          foreignField: '_id',
+          as: 'plan'
+        }
+      },
+      { $unwind: '$plan' },
+      // Sort by rankingWeight (Diamond=5, etc.) then by creation date
+      { $sort: { 'plan.rankingWeight': -1, createdAt: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: 'properties',
+          localField: '_id',
+          foreignField: 'partnerId',
+          pipeline: [{ $match: { status: 'approved', isLive: true } }],
+          as: 'activeProperties'
+        }
+      },
+      {
+        $addFields: {
+          totalListings: { $size: '$activeProperties' },
+          experienceYears: {
+            $floor: {
+              $divide: [
+                { $subtract: [new Date(), '$partnerSince'] },
+                1000 * 60 * 60 * 24 * 365
+              ]
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          password: 0,
+          otp: 0,
+          otpExpires: 0,
+          fcmTokens: 0,
+          aadhaarNumber: 0,
+          aadhaarFront: 0,
+          aadhaarBack: 0,
+          panNumber: 0,
+          panCardImage: 0,
+          activeProperties: 0,
+          'subscription.transactionId': 0
+        }
+      }
+    ];
+
+    const partners = await Partner.aggregate(pipeline);
+    res.json(partners);
+  } catch (err) {
+    console.error('getRecommendedSellers error:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
